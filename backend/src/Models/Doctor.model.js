@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const doctorSchema = new mongoose.Schema(
   {
@@ -46,8 +47,15 @@ const doctorSchema = new mongoose.Schema(
       }
     },
     contact: {
-      mobile: String,
-      email: String
+      mobile: {
+        type: String,
+        required: true
+      },
+      email: {
+        type: String,
+        required: true,
+        unique: true
+      }
     },
     consultation: {
       types: [
@@ -60,9 +68,13 @@ const doctorSchema = new mongoose.Schema(
     account: {
       username: {
         type: String,
+        required: true,
         unique: true
       },
-      passwordHash: String,
+      passwordHash: {
+        type: String,
+        required: true
+      },
       role: {
         type: String,
         default: "DOCTOR"
@@ -70,13 +82,44 @@ const doctorSchema = new mongoose.Schema(
       active: {
         type: Boolean,
         default: true
-      }
+      },
+      lastLogin: Date,
+      loginAttempts: {
+        type: Number,
+        default: 0
+      },
+      lockedUntil: Date
     }
   },
   {
     timestamps: true
   }
 );
+
+doctorSchema.methods.comparePassword = async function(password) {
+  return await bcrypt.compare(password, this.account.passwordHash);
+};
+
+doctorSchema.methods.incrementLoginAttempts = function() {
+  this.account.loginAttempts += 1;
+  if (this.account.loginAttempts >= 5) {
+    this.account.lockedUntil = new Date(Date.now() + 30 * 60 * 1000);
+  }
+  return this.save();
+};
+
+doctorSchema.methods.resetLoginAttempts = function() {
+  this.account.loginAttempts = 0;
+  this.account.lockedUntil = null;
+  return this.save();
+};
+
+doctorSchema.methods.isLocked = function() {
+  if (this.account.lockedUntil && this.account.lockedUntil > new Date()) {
+    return true;
+  }
+  return false;
+};
 
 doctorSchema.index({
   "hospital.hospitalId": 1
@@ -88,6 +131,14 @@ doctorSchema.index({
 
 doctorSchema.index({
   specialization: 1
+});
+
+doctorSchema.index({
+  "contact.email": 1
+});
+
+doctorSchema.index({
+  "account.username": 1
 });
 
 const Doctor = mongoose.model("Doctor", doctorSchema);
