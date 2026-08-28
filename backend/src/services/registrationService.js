@@ -1,6 +1,6 @@
-import { aadhaarData } from '../utils/aadhaarData.js';
-import cloudinary from '../config/cloudinary.js';
-import Patient from '../models/Patient.js';
+import { aadhaarData } from '../utils/Aadharmockdata.js';
+import cloudinary from '../utils/cloudinary.js';
+import Patient from '../Models/abha.model.js';
 import { generateABHAId, generateFaceId } from './abhaService.js';
 import { extractFaceEmbedding } from './faceService.js';
 

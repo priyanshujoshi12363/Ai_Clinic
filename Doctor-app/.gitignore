@@ -1,0 +1,174 @@
+# Built application files
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+*.jar
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+build/
+app/build/
+gradle/
+*.iml
+*.iws
+*.ipr
+.idea/
+.classpath
+.project
+.settings/
+.gradle/
+local.properties
+
+# Gradle files
+.gradle/
+gradlew
+gradlew.bat
+gradle-wrapper.jar
+gradle-wrapper.properties
+
+# Log files
+*.log
+
+# Android Studio
+*.iml
+.idea/
+*.iws
+*.ipr
+.vscode/
+
+# Keystore files
+*.jks
+*.keystore
+*.key
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IntelliJ IDEA
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Node modules (if any)
+node_modules/
+npm-debug.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Backup files
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# Sensitive files
+local.properties
+google-services.json
+keystore.jks
+key.properties
+
+# Test
+*.test
+*.tests
+*.test.js
+
+# Coverage
+coverage/
+*.cover
+*.coverage
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Crashlytics
+*/crashlytics-build.properties
+
+# Firebase
+google-services.json
+GoogleService-Info.plist
+
+# Build outputs
+build/
+app/build/
+dist/
+target/
+bin/
+obj/
+
+# Application-specific
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Gradle
+.gradle/
+gradle/wrapper/gradle-wrapper.jar
+gradle/wrapper/gradle-wrapper.properties
+
+# Sensitive files
+local.properties
+keystore.jks
+key.properties
+debug.keystore
+release.keystore
+
+# Environment
+.env
+.env.production
+.env.development
+.env.local
+
+# Backup files
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# OS generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

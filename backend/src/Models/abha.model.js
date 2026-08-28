@@ -408,8 +408,8 @@ const consentSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const patientSchema = new mongoose.Schema({
-  abhaId: { type: String, required: true, unique: true },
-  aadhaarNumber: { type: String, required: true, unique: true },
+  abhaId: { type: String, required: true},
+  aadhaarNumber: { type: String, required: true },
   name: { type: String, required: true },
   dateOfBirth: { type: String, required: true },
   gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
@@ -435,22 +435,15 @@ const patientSchema = new mongoose.Schema({
   totalDocuments: { type: Number, default: 0 }
 }, { timestamps: true });
 
-patientSchema.index({ abhaId: 1 });
-patientSchema.index({ aadhaarNumber: 1 });
 patientSchema.index({ mobile: 1 });
-patientSchema.index({ 'visits.visitId': 1 });
 patientSchema.index({ 'visits.hospitalId': 1 });
 patientSchema.index({ 'visits.date': -1 });
-patientSchema.index({ 'labReports.reportId': 1 });
-patientSchema.index({ 'prescriptions.prescriptionId': 1 });
-patientSchema.index({ 'documents.documentId': 1 });
 patientSchema.index({ 'consents.hospitalId': 1 });
 patientSchema.index({ 'consents.status': 1 });
 patientSchema.index({ name: 'text' });
 patientSchema.index({ 'address.district': 1 });
 patientSchema.index({ 'address.state': 1 });
 patientSchema.index({ 'abdmDetails.abhaAddress': 1 });
-patientSchema.index({ 'sessions.sessionId': 1 });
 patientSchema.index({ 'sessions.status': 1 });
 patientSchema.index({ 'medicalTimeline.date': -1 });
 patientSchema.index({ 'emergencyFlags.triggered': 1 });

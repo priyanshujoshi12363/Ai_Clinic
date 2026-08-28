@@ -6,7 +6,6 @@ const doctorSchema = new mongoose.Schema(
     doctorId: {
       type: String,
       required: true,
-      unique: true
     },
     name: {
       firstName: {
@@ -22,7 +21,6 @@ const doctorSchema = new mongoose.Schema(
     registrationNumber: {
       type: String,
       required: true,
-      unique: true
     },
     specialization: {
       type: String,
@@ -54,7 +52,6 @@ const doctorSchema = new mongoose.Schema(
       email: {
         type: String,
         required: true,
-        unique: true
       }
     },
     consultation: {
@@ -69,7 +66,6 @@ const doctorSchema = new mongoose.Schema(
       username: {
         type: String,
         required: true,
-        unique: true
       },
       passwordHash: {
         type: String,
