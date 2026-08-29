@@ -6,9 +6,9 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.ayush.doctorapp.databinding.ActivityLoginBinding
-import com.ayush.doctorapp.network.ApiResult
-import com.ayush.doctorapp.utils.TokenManager
-import com.ayush.doctorapp.viewmodels.AuthViewModel
+import com.ayush.doctorapp.Network.ApiResult
+import com.ayush.doctorapp.Utils.TokenManager
+import com.ayush.doctorapp.ViewModels.AuthViewModel
 
 class LoginActivity : AppCompatActivity() {
 

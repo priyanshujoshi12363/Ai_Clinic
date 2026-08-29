@@ -4,7 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.ayush.doctorapp.databinding.ActivityProfileBinding
-import com.ayush.doctorapp.utils.TokenManager
+import com.ayush.doctorapp.Utils.TokenManager
 
 class ProfileActivity : AppCompatActivity() {
 

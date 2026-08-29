@@ -1,6 +1,6 @@
-package com.ayush.doctorapp.network
+package com.ayush.doctorapp.Network
 
-import com.ayush.doctorapp.models.*
+import com.ayush.doctorapp.Models.*
 import retrofit2.Response
 import retrofit2.http.*
 

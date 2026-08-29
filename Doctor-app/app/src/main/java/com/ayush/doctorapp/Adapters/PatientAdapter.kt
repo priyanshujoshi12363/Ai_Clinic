@@ -1,4 +1,4 @@
-package com.ayush.doctorapp.adapters
+package com.ayush.doctorapp.Adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.ayush.doctorapp.databinding.ItemPatientBinding
-import com.ayush.doctorapp.models.Patient
+import com.ayush.doctorapp.Models.Patient
 
 class PatientAdapter(
     private val onItemClick: (Patient) -> Unit

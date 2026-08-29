@@ -113,9 +113,10 @@ export const registerPatientWithAadhaarAndFace = async (aadhaarNumber, otp, face
     const quality = embeddingResult.quality || 0.5;
     console.log('Face embedding extracted successfully');
     console.log(' Uploading to Cloudinary...');
+    
     let imageData = faceImage;
     if (faceImage.includes('base64,')) {
-      imageData = faceImage.split('base64,')[1];
+      imageData = faceImage;
     }
 
     const abhaId = generateABHAId();
@@ -124,7 +125,7 @@ export const registerPatientWithAadhaarAndFace = async (aadhaarNumber, otp, face
     let cloudinaryResult;
     try {
       cloudinaryResult = await cloudinary.uploader.upload(
-        `data:image/jpeg;base64,${imageData}`,
+        imageData,
         {
           folder: 'patient_faces',
           public_id: `face_${abhaId}`,
@@ -175,7 +176,7 @@ export const registerPatientWithAadhaarAndFace = async (aadhaarNumber, otp, face
         };
         existingPatient.updatedAt = new Date();
         patient = await existingPatient.save();
-        console.log('✅ Existing patient updated with face');
+        console.log('Existing patient updated with face');
       } else {
         patient = new Patient({
           abhaId: abhaId,

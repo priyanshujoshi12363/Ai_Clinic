@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.DoctorApp" parent="Theme.AppCompat.Light.NoActionBar">
+
+    <style name="Theme.DoctorApp" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorAccent">@color/primary</item>
+        <item name="android:statusBarColor">@color/primary_dark</item>
+        <item name="android:windowBackground">@color/gray_50</item>
     </style>
+
+    <style name="ThemeOverlay.DoctorApp.DarkActionBar" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar"/>
+
+    <style name="Theme.AppCompat.Light.DarkActionBar" parent="Theme.DoctorApp"/>
+
 </resources>

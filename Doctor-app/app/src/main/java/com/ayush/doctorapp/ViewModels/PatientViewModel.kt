@@ -1,13 +1,13 @@
-package com.ayush.doctorapp.viewmodels
+package com.ayush.doctorapp.ViewModels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.ayush.doctorapp.models.Patient
-import com.ayush.doctorapp.network.ApiClient
-import com.ayush.doctorapp.network.ApiResult
+import com.ayush.doctorapp.Models.Patient
+import com.ayush.doctorapp.Network.ApiClient
+import com.ayush.doctorapp.Network.ApiResult
 import kotlinx.coroutines.launch
 
 class PatientViewModel(application: Application) : AndroidViewModel(application) {

@@ -5,20 +5,19 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.tabs.TabLayoutMediator
 import com.ayush.doctorapp.R
-import com.ayush.doctorapp.adapters.PatientAdapter
+import com.ayush.doctorapp.adapters.DashboardPagerAdapter
 import com.ayush.doctorapp.databinding.ActivityDashboardBinding
-import com.ayush.doctorapp.models.Patient
-import com.ayush.doctorapp.network.ApiResult
+import com.ayush.doctorapp.fragments.EmergencyListFragment
+import com.ayush.doctorapp.fragments.PatientListFragment
 import com.ayush.doctorapp.utils.TokenManager
-import com.ayush.doctorapp.viewmodels.PatientViewModel
 
 class DashboardActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityDashboardBinding
-    private lateinit var patientAdapter: PatientAdapter
-    private val patientViewModel: PatientViewModel by viewModels()
+    private lateinit var pagerAdapter: DashboardPagerAdapter
     private val tokenManager = TokenManager(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,62 +26,46 @@ class DashboardActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupToolbar()
-        setupRecyclerView()
-        setupObservers()
-        loadPatients()
-
-        binding.swipeRefresh.setOnRefreshListener {
-            loadPatients()
-        }
+        setupTabs()
+        setupReloadButton()
     }
 
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
-        supportActionBar?.title = "Dashboard"
+        supportActionBar?.title = "Doctor Dashboard"
     }
 
-    private fun setupRecyclerView() {
-        patientAdapter = PatientAdapter { patient ->
-            navigateToPatientDetail(patient)
-        }
-        binding.recyclerView.apply {
-            layoutManager = LinearLayoutManager(this@DashboardActivity)
-            adapter = patientAdapter
-        }
+    private fun setupTabs() {
+        pagerAdapter = DashboardPagerAdapter(supportFragmentManager, lifecycle)
+        binding.viewPager.adapter = pagerAdapter
+
+        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
+            tab.text = when (position) {
+                0 -> "👨‍⚕️ Patients"
+                1 -> "🚨 Emergency"
+                else -> "Patients"
+            }
+        }.attach()
     }
 
-    private fun setupObservers() {
-        patientViewModel.patients.observe(this) { result ->
-            binding.swipeRefresh.isRefreshing = false
-            when (result) {
-                is ApiResult.Success -> {
-                    result.data?.let { patients ->
-                        patientAdapter.submitList(patients)
+    private fun setupReloadButton() {
+        binding.fabReload.setOnClickListener {
+            val currentItem = binding.viewPager.currentItem
+            when (currentItem) {
+                0 -> {
+                    val fragment = supportFragmentManager.findFragmentByTag("f0")
+                    if (fragment is PatientListFragment) {
+                        fragment.refreshData()
                     }
-                    binding.progressBar.visibility = android.view.View.GONE
                 }
-                is ApiResult.Error -> {
-                    binding.progressBar.visibility = android.view.View.GONE
-                }
-                is ApiResult.Loading -> {
-                    binding.progressBar.visibility = android.view.View.VISIBLE
+                1 -> {
+                    val fragment = supportFragmentManager.findFragmentByTag("f1")
+                    if (fragment is EmergencyListFragment) {
+                        fragment.refreshData()
+                    }
                 }
             }
         }
-    }
-
-    private fun loadPatients() {
-        val token = tokenManager.getToken()
-        if (token != null) {
-            patientViewModel.getPatients(token)
-        }
-    }
-
-    private fun navigateToPatientDetail(patient: Patient) {
-        val intent = Intent(this, PatientDetailActivity::class.java)
-        intent.putExtra("abhaId", patient.abhaId)
-        intent.putExtra("patientName", patient.name)
-        startActivity(intent)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

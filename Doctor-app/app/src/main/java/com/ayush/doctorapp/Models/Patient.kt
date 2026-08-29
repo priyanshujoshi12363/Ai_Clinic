@@ -1,4 +1,4 @@
-package com.ayush.doctorapp.models
+package com.ayush.doctorapp.Models
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

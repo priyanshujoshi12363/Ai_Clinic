@@ -1,16 +1,16 @@
-package com.ayush.doctorapp.viewmodels
+package com.ayush.doctorapp.ViewModels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.ayush.doctorapp.models.LoginRequest
-import com.ayush.doctorapp.models.LoginResponse
-import com.ayush.doctorapp.models.RegisterRequest
-import com.ayush.doctorapp.network.ApiClient
-import com.ayush.doctorapp.network.ApiResult
-import com.ayush.doctorapp.utils.TokenManager
+import com.ayush.doctorapp.Models.LoginRequest
+import com.ayush.doctorapp.Models.LoginResponse
+import com.ayush.doctorapp.Models.RegisterRequest
+import com.ayush.doctorapp.Network.ApiClient
+import com.ayush.doctorapp.Network.ApiResult
+import com.ayush.doctorapp.Utils.TokenManager
 import kotlinx.coroutines.launch
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {

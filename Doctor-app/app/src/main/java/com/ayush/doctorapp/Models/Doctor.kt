@@ -1,4 +1,4 @@
-package com.ayush.doctorapp.models
+package com.ayush.doctorapp.Models
 
 data class Doctor(
     val doctorId: String,

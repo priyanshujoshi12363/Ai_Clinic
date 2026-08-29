@@ -5,14 +5,14 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.ayush.doctorapp.databinding.ActivityRegisterBinding
-import com.ayush.doctorapp.models.AccountRegister
-import com.ayush.doctorapp.models.ConsultationInfo
-import com.ayush.doctorapp.models.ContactInfo
-import com.ayush.doctorapp.models.DoctorName
-import com.ayush.doctorapp.models.HospitalInfo
-import com.ayush.doctorapp.models.RegisterRequest
-import com.ayush.doctorapp.network.ApiResult
-import com.ayush.doctorapp.viewmodels.AuthViewModel
+import com.ayush.doctorapp.Models.AccountRegister
+import com.ayush.doctorapp.Models.ConsultationInfo
+import com.ayush.doctorapp.Models.ContactInfo
+import com.ayush.doctorapp.Models.DoctorName
+import com.ayush.doctorapp.Models.HospitalInfo
+import com.ayush.doctorapp.Models.RegisterRequest
+import com.ayush.doctorapp.Network.ApiResult
+import com.ayush.doctorapp.ViewModels.AuthViewModel
 
 class RegisterActivity : AppCompatActivity() {
 

@@ -1,6 +1,6 @@
-package com.ayush.doctorapp.network
+package com.ayush.doctorapp.Network
 
-import com.ayush.doctorapp.models.ApiResponse
+import com.ayush.doctorapp.Models.ApiResponse
 import retrofit2.Response
 import java.io.IOException
 

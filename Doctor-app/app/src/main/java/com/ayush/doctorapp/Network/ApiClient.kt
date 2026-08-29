@@ -1,5 +1,7 @@
-package com.ayush.doctorapp.network
+package com.ayush.doctorapp.Network
 
+import com.ayush.doctorapp.Network.ApiService
+import com.ayush.doctorapp.Network.FakeApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -8,11 +10,13 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
     private const val BASE_URL = "http://10.0.2.2:4000/api/"
-    
+
+    private const val USE_FAKE = true
+
     private val client by lazy {
         val interceptor = HttpLoggingInterceptor()
         interceptor.level = HttpLoggingInterceptor.Level.BODY
-        
+
         OkHttpClient.Builder()
             .addInterceptor(interceptor)
             .addInterceptor { chain ->
@@ -26,13 +30,17 @@ object ApiClient {
             .writeTimeout(30, TimeUnit.SECONDS)
             .build()
     }
-    
+
     val apiService: ApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ApiService::class.java)
+        if (USE_FAKE) {
+            FakeApiService()
+        } else {
+            Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(ApiService::class.java)
+        }
     }
 }

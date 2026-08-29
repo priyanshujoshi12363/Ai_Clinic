@@ -5,9 +5,9 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.ayush.doctorapp.databinding.ActivityPatientDetailBinding
-import com.ayush.doctorapp.network.ApiResult
-import com.ayush.doctorapp.utils.TokenManager
-import com.ayush.doctorapp.viewmodels.PatientViewModel
+import com.ayush.doctorapp.Network.ApiResult
+import com.ayush.doctorapp.Utils.TokenManager
+import com.ayush.doctorapp.ViewModels.PatientViewModel
 
 class PatientDetailActivity : AppCompatActivity() {
 
@@ -61,7 +61,7 @@ class PatientDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun displayPatientDetails(patient: com.ayush.doctorapp.models.Patient) {
+    private fun displayPatientDetails(patient: com.ayush.doctorapp.Models.Patient) {
         binding.tvPatientName.text = patient.name
         binding.tvAbhaId.text = "ABHA: ${patient.abhaId}"
         binding.tvGenderAge.text = "${patient.gender}, ${calculateAge(patient.dateOfBirth)} years"
