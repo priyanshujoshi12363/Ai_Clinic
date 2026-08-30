@@ -7,6 +7,7 @@ import patientRoutes from "./src/Routes/patientRoutes.js"
 import faceSearch from "./src/Routes/FaceSearch.js"
 import abhaLink from "./src/Routes/abhaLinkRoutes.js"
 import emergency from "./src/Routes/emergencyRoutes.js"
+import consult from "./src/Routes/ConsulatationRoutes.js"
 dotenv.config();
 
 const app = express();
@@ -21,6 +22,7 @@ app.use("/patient" , patientRoutes)
 app.use("/patient/abha/facesearch" , faceSearch)
 app.use("/patient/abha" , abhaLink)
 app.use("/emergency" , emergency)
+app.use("/consult" , consult)
 app.get("/", (req, res) => {
   res.json({
     success: true,

@@ -133,6 +133,17 @@ const hisSchema = new mongoose.Schema(
         }
       }
     },
+     audioSummary: {
+        url: { type: String },
+        publicId: { type: String },
+        duration: { type: Number },
+        format: { type: String },
+        bytes: { type: Number },
+        language: { type: String },
+        generatedAt: { type: Date },
+        isActive: { type: Boolean, default: true }
+      }
+    ,
     abhaHistoryAccess: {
       requested: Boolean,
       consentId: String,
