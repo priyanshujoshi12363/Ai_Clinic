@@ -1,7 +1,9 @@
 import Patient from '../Models/abha.model.js';
-import HIS from '../Models/abha.model.js';
+import HIS from '../Models/HIS.model.js';
 import cloudinary from '../utils/cloudinary.js';
 import axios from 'axios';
+import { Readable } from 'stream';
+
 
 export const startConsultation = async (req, res) => {
   try {
@@ -13,7 +15,7 @@ export const startConsultation = async (req, res) => {
     }
 
     const visitId = `VISIT_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    const tokenNumber = parseInt(`${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 100)}`);
+    const tokenNumber = `${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 100).toString().padStart(2, '0')}`;
 
     const visit = {
       visitId,
@@ -35,13 +37,17 @@ export const startConsultation = async (req, res) => {
       hospitalName,
       patient: {
         abhaId: patient.abhaId,
+        hospitalPatientId: `HP_${Date.now()}`,
         name: patient.name,
         aadhaarNumber: patient.aadhaarNumber,
         dateOfBirth: patient.dateOfBirth,
         gender: patient.gender,
-        mobile: patient.mobile
+        mobile: patient.mobile || ''
       },
-      doctor: { doctorId: doctorId || '', doctorName: doctorName || '' },
+      doctor: {
+        doctorId: doctorId || '',
+        doctorName: doctorName || ''
+      },
       appointment: {
         appointmentId: `APP_${Date.now()}`,
         tokenNumber,
@@ -53,7 +59,10 @@ export const startConsultation = async (req, res) => {
         mode: consultationType,
         startedAt: new Date()
       },
-      timing: { patientArrivedAt: new Date(), kioskStartedAt: new Date() }
+      timing: {
+        patientArrivedAt: new Date(),
+        kioskStartedAt: new Date()
+      }
     });
 
     await hisRecord.save();
@@ -107,8 +116,23 @@ export const saveConsultationSummary = async (req, res) => {
     visit.aiRedFlags = redFlags || [];
     visit.urgency = urgency || 'ROUTINE';
     visit.clinicalHistory = clinicalHistory || {};
-    visit.ayushHistory = ayushHistory || {};
     visit.chiefComplaint = chiefComplaint || clinicalHistory?.chiefComplaint || '';
+
+    // ✅ Convert ayushHistory strings to objects with assessment field
+    if (ayushHistory) {
+      visit.ayushHistory = {
+        prakriti: ayushHistory.prakriti ? { assessment: ayushHistory.prakriti } : {},
+        vikriti: ayushHistory.vikriti ? { assessment: ayushHistory.vikriti } : {},
+        sara: ayushHistory.sara ? { assessment: ayushHistory.sara } : {},
+        samhanana: ayushHistory.samhanana ? { assessment: ayushHistory.samhanana } : {},
+        pramana: ayushHistory.pramana ? { assessment: ayushHistory.pramana } : {},
+        satmya: ayushHistory.satmya ? { assessment: ayushHistory.satmya } : {},
+        sattva: ayushHistory.sattva ? { assessment: ayushHistory.sattva } : {},
+        aharaShakti: ayushHistory.aharaShakti ? { assessment: ayushHistory.aharaShakti } : {},
+        vyayamaShakti: ayushHistory.vyayamaShakti ? { assessment: ayushHistory.vyayamaShakti } : {},
+        vaya: ayushHistory.vaya ? { assessment: ayushHistory.vaya } : {}
+      };
+    }
 
     if (prescriptions && prescriptions.length > 0) {
       visit.prescriptions = prescriptions.map(p => ({
@@ -197,7 +221,9 @@ export const saveConsultationSummary = async (req, res) => {
     }
 
     patient.medicalHistory = history;
-    visit.status = 'KIOSK_COMPLETED';
+    
+    // ✅ Use only valid enum value: COMPLETED (since KIOSK_COMPLETED doesn't exist in your enum)
+    visit.status = 'COMPLETED';
     patient.lastVisitDate = new Date();
     await patient.save();
 
@@ -238,7 +264,6 @@ export const saveConsultationSummary = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 export const generateConsultationAudio = async (req, res) => {
   try {
     const { visitId } = req.params;
@@ -260,48 +285,74 @@ export const generateConsultationAudio = async (req, res) => {
     const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
 
     const voiceMap = {
-      'hi-IN': 'hi-IN-Female-1',
-      'en-US': 'en-US-Female-1',
-      'ta-IN': 'ta-IN-Female-1',
-      'te-IN': 'te-IN-Female-1'
+      'hi-IN': 'shubh',
+      'en-US': 'shubh',
+      'ta-IN': 'shubh',
+      'te-IN': 'shubh'
     };
-    const voice = voiceMap[language] || 'hi-IN-Female-1';
+    const voice = voiceMap[language] || 'shubh';
 
-    const response = await axios.post(SARVAM_TTS_URL, {
-      inputs: [textToSpeak],
-      target_language_code: language,
-      speaker: voice,
-      pitch: 1.0,
-      pace: 1.0,
-      loudness: 1.0,
-      speech_sample_rate: 8000,
-      enable_preprocessing: true,
-      model: 'bulbul:v1'
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': SARVAM_API_KEY
-      },
-      responseType: 'arraybuffer'
-    });
-
-    const audioBuffer = Buffer.from(response.data);
-    const uploadResult = await new Promise((resolve, reject) => {
-      const stream = require('stream').Readable.from(audioBuffer);
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          resource_type: 'video',
-          folder: `consultation_audio/${patient.abhaId}`,
-          public_id: `summary_${Date.now()}`,
-          format: 'wav'
+    let response;
+    try {
+      response = await axios.post(SARVAM_TTS_URL, {
+        inputs: [textToSpeak],
+        target_language_code: language,
+        speaker: voice,
+        pace: 1.0,
+        speech_sample_rate: 8000,
+        model: 'bulbul:v3'
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'api-subscription-key': SARVAM_API_KEY
         },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      stream.pipe(uploadStream);
-    });
+        responseType: 'json'
+      });
+    } catch (error) {
+      const sarvamError = error.response?.data
+        ? JSON.stringify(error.response.data)
+        : error.message;
+      return res.status(502).json({ success: false, message: 'Sarvam TTS failed: ' + sarvamError });
+    }
+
+    console.log('Sarvam response keys:', Object.keys(response.data || {}));
+
+    const base64Audio = response.data?.audios?.[0]
+      || response.data?.audio
+      || response.data?.output;
+
+    if (!base64Audio) {
+      console.error('Unrecognized Sarvam response shape:', JSON.stringify(response.data).slice(0, 500));
+      return res.status(502).json({ success: false, message: 'Sarvam TTS returned no recognizable audio field' });
+    }
+
+    const audioBuffer = Buffer.from(base64Audio, 'base64');
+
+    let uploadResult;
+    try {
+      uploadResult = await new Promise((resolve, reject) => {
+        const stream = Readable.from(audioBuffer);
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'video',
+            folder: `consultation_audio/${patient.abhaId}`,
+            public_id: `summary_${Date.now()}`,
+            format: 'wav'
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.pipe(uploadStream);
+      });
+    } catch (error) {
+      console.error('Cloudinary raw error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+      return res.status(500).json({
+        success: false,
+        message: 'Audio upload failed: ' + (error?.message || error?.error?.message || JSON.stringify(error))
+      });
+    }
 
     if (!uploadResult) {
       return res.status(500).json({ success: false, message: 'Audio upload failed' });
@@ -310,7 +361,7 @@ export const generateConsultationAudio = async (req, res) => {
     const audioData = {
       url: uploadResult.secure_url,
       publicId: uploadResult.public_id,
-      duration: Math.round(response.data.length / 16000),
+      duration: Math.round(audioBuffer.length / 16000),
       format: uploadResult.format,
       bytes: uploadResult.bytes,
       language: language,
@@ -320,13 +371,17 @@ export const generateConsultationAudio = async (req, res) => {
 
     visit.audioSummary = audioData;
 
-    const hisRecord = await HIS.findOne({
-      'appointment.appointmentId': `APP_${visitId.split('_')[1]}`
-    });
+    try {
+      const hisRecord = await HIS.findOne({
+        'appointment.appointmentId': `APP_${visitId.split('_')[1]}`
+      });
 
-    if (hisRecord) {
-      hisRecord.aiCaseTaking.audioSummary = audioData;
-      await hisRecord.save();
+      if (hisRecord) {
+        hisRecord.aiCaseTaking.audioSummary = audioData;
+        await hisRecord.save();
+      }
+    } catch (error) {
+      console.error('HIS sync error:', error);
     }
 
     await patient.save();
