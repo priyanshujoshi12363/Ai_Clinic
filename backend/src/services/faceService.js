@@ -4,8 +4,14 @@ const FACE_SERVICE_URL = process.env.FACE_SERVICE_URL || 'http://localhost:8001'
 
 export const extractFaceEmbedding = async (imageBase64, abhaId = null) => {
   try {
+    let imageData = imageBase64;
+    
+    if (!imageData.startsWith('data:image')) {
+      imageData = `data:image/jpeg;base64,${imageData}`;
+    }
+    
     const response = await axios.post(`${FACE_SERVICE_URL}/api/extract`, {
-      image: imageBase64,
+      image: imageData,
       abhaId: abhaId
     });
     

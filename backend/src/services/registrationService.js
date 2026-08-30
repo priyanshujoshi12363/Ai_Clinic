@@ -115,30 +115,28 @@ export const registerPatientWithAadhaarAndFace = async (aadhaarNumber, otp, face
     console.log(' Uploading to Cloudinary...');
     
     let imageData = faceImage;
-    if (faceImage.includes('base64,')) {
-      imageData = faceImage;
-    }
+    if (!imageData.startsWith('data:image')) { imageData = 'data:image/jpeg;base64,' + imageData; }
 
     const abhaId = generateABHAId();
     const faceId = generateFaceId();
 
-    let cloudinaryResult;
-    try {
-      cloudinaryResult = await cloudinary.uploader.upload(
-        imageData,
-        {
-          folder: 'patient_faces',
-          public_id: `face_${abhaId}`,
-          overwrite: true,
-          format: 'jpg',
-          quality: 'auto:good',
-          transformation: [{ width: 640, height: 640, crop: 'limit' }]
-        }
-      );
-      console.log('Cloudinary upload successful');
-    } catch (error) {
-      return { success: false, message: 'Failed to upload face image: ' + error.message };
+  let cloudinaryResult;
+try {
+  cloudinaryResult = await cloudinary.uploader.upload(
+    imageData,
+    {
+      folder: 'patient_faces',
+      public_id: `face_${abhaId}`,
+      overwrite: true,
+      format: 'jpg',
+      quality: 'auto:good',
+      transformation: [{ width: 640, height: 640, crop: 'limit' }]
     }
+  );
+  console.log('Cloudinary upload successful');
+} catch (error) {
+  return { success: false, message: 'Failed to upload face image: ' + error.message };  // ← still bare error.message
+}
     console.log('Creating patient in MongoDB...');
     
     const nameParts = aadhaarInfo.name.split(' ');
@@ -287,8 +285,11 @@ export const registerPatientWithAadhaarAndFace = async (aadhaarNumber, otp, face
       }
     };
 
-  } catch (error) {
-    console.error('Registration error:', error);
-    return { success: false, message: 'Registration failed: ' + error.message };
-  }
-};
+ }  catch (error) {
+  console.error('Cloudinary raw error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+  return { 
+    success: false, 
+    message: 'Failed to upload face image: ' + (error?.message || error?.error?.message || JSON.stringify(error))
+  };
+}
+}

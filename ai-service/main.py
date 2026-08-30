@@ -24,19 +24,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Set InsightFace home
 os.environ.setdefault("INSIGHTFACE_HOME", "./insightface_models")
 
-# Initialize InsightFace
 face_app = FaceAnalysis(
     name="buffalo_l",
     providers=["CPUExecutionProvider"]
 )
 face_app.prepare(ctx_id=-1, det_size=(640, 640))
 
-print("✅ InsightFace loaded successfully")
-print(f"   Model: buffalo_l")
-print(f"   Embedding size: 512")
+print("InsightFace loaded successfully")
+print(f"Model: buffalo_l")
+print(f"Embedding size: 512")
 
 class FaceExtractRequest(BaseModel):
     image: str
@@ -51,14 +49,24 @@ class FaceVerifyRequest(BaseModel):
     embedding: List[float]
 
 def decode_base64_image(image_b64: str) -> np.ndarray:
-    if "," in image_b64:
-        image_b64 = image_b64.split(",", 1)[1]
-    raw = base64.b64decode(image_b64)
-    arr = np.frombuffer(raw, np.uint8)
-    img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-    if img is None:
-        raise ValueError("Invalid image data")
-    return img
+    try:
+        if "base64," in image_b64:
+            image_b64 = image_b64.split("base64,", 1)[1]
+        elif "," in image_b64:
+            image_b64 = image_b64.split(",", 1)[1]
+        
+        image_b64 = image_b64.strip()
+        
+        raw = base64.b64decode(image_b64)
+        arr = np.frombuffer(raw, np.uint8)
+        img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            raise ValueError("Invalid image data")
+        
+        return img
+    except Exception as e:
+        raise ValueError(f"Failed to decode image: {str(e)}")
 
 @app.get("/")
 async def root():
@@ -259,11 +267,11 @@ async def health_check():
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("🚀 Face Recognition Service Starting...")
+    print("Face Recognition Service Starting...")
     print("=" * 60)
-    print(f"📡 Server: http://localhost:8001")
-    print(f"📚 API Docs: http://localhost:8001/docs")
-    print(f"🔍 Health: http://localhost:8001/api/health")
+    print(f"Server: http://localhost:8001")
+    print(f"API Docs: http://localhost:8001/docs")
+    print(f"Health: http://localhost:8001/api/health")
     print("=" * 60)
     
     uvicorn.run(

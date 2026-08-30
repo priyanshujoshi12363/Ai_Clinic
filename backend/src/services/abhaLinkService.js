@@ -184,7 +184,7 @@ export const getPatientByABHA = async (abhaId) => {
   }
 };
 
-export const checkFaceLinked = async (abhaId) => {
+export const checkFaceLink = async (abhaId) => {
   try {
     const patient = await Patient.findOne({ abhaId });
     

@@ -413,7 +413,7 @@ const patientSchema = new mongoose.Schema({
   name: { type: String, required: true },
   dateOfBirth: { type: String, required: true },
   gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
-  mobile: { type: String, required: true },
+  mobile: { type: String, required: false, default: '' },
   email: { type: String },
   preferredLanguage: { type: String, default: 'Hindi' },
   languages: [String],
@@ -705,24 +705,20 @@ patientSchema.statics.getABHASynced = function() {
     'abdmDetails.syncStatus': 'SYNCED'
   });
 };
-
-patientSchema.pre('save', function(next) {
+patientSchema.pre('save', function () {
   this.updatedAt = new Date();
-  next();
 });
 
-patientSchema.pre('save', function(next) {
+patientSchema.pre('save', function () {
   this.totalVisits = this.visits ? this.visits.length : 0;
   this.totalPrescriptions = this.prescriptions ? this.prescriptions.length : 0;
   this.totalDocuments = this.documents ? this.documents.length : 0;
-  next();
 });
 
-patientSchema.pre('save', function(next) {
+patientSchema.pre('save', function () {
   if (this.medicalTimeline && this.medicalTimeline.length > 0) {
     this.medicalTimeline.sort((a, b) => new Date(a.date) - new Date(b.date));
   }
-  next();
 });
 
 const Patient = mongoose.model('Patient', patientSchema);
