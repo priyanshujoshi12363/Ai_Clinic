@@ -1,31 +1,25 @@
-import React, { useState } from 'react';
-import Homepage from './components/HomePage.tsx';
-import EmergencyPage from './pages/EmergencyPage.tsx';
-import ConsultationPage from './pages/ConsultationPage.tsx';
+import { useState } from 'react';
+import Homepage from './components/HomePage';
+import EmergencyPage from './pages/EmergencyPage';
+import ConsultationPage from './pages/ConsultationPage';
 
 type Page = 'home' | 'consultation' | 'emergency';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [language, setLanguage] = useState('hi-IN');
 
-  const navigateTo = (page: string) => {
-    setCurrentPage(page as Page);
-  };
+  const navigateTo = (page: string) => setCurrentPage(page as Page);
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'home':
-        return <Homepage navigateTo={navigateTo} />;
-      case 'consultation':
-        return <ConsultationPage navigateTo={navigateTo} />;
-      case 'emergency':
-        return <EmergencyPage navigateTo={navigateTo} />;
-      default:
-        return <Homepage navigateTo={navigateTo} />;
-    }
-  };
+  if (currentPage === 'consultation') {
+    return <ConsultationPage key="consultation" navigateTo={navigateTo} language={language} setLanguage={setLanguage} />;
+  }
 
-  return <div>{renderPage()}</div>;
+  if (currentPage === 'emergency') {
+    return <EmergencyPage key="emergency" navigateTo={navigateTo} language={language} setLanguage={setLanguage} />;
+  }
+
+  return <Homepage navigateTo={navigateTo} language={language} setLanguage={setLanguage} />;
 }
 
 export default App;

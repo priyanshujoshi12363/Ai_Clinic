@@ -1,10 +1,26 @@
 import axios from 'axios';
 
-const BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:4000';
+const KIOSK_API = 'http://localhost:4000';
+
+const normalizeBase = (value: string) => value.trim().replace(/\/+$/, '');
+
+const resolveBaseUrl = (): string => {
+  const runtime = (globalThis as any).__API_BASE__;
+  if (typeof runtime === 'string' && runtime.trim()) return normalizeBase(runtime);
+
+  const build = (import.meta as any).env?.VITE_API_URL;
+  if (typeof build === 'string' && build.trim()) return normalizeBase(build);
+
+  return KIOSK_API;
+};
+
+export const BASE_URL = resolveBaseUrl();
+
+export const isRemoteBackend = /^https?:\/\/(?!localhost|127\.0\.0\.1|\[::1\])/i.test(BASE_URL);
 
 export const http = axios.create({
   baseURL: BASE_URL,
-  timeout: 240000,
+  timeout: 300000,
   headers: { 'Content-Type': 'application/json' }
 });
 
@@ -72,6 +88,51 @@ export interface ReviewResult {
   audio: AudioPayload;
 }
 
+export interface EssentialQuestion {
+  key: string;
+  question: string;
+}
+
+export interface EmergencyIntake {
+  tokenNumber: string;
+  transcript: string;
+  language: string;
+  detectedLanguage: string | null;
+  chiefComplaint: string;
+  triageLevel: 'RED' | 'ORANGE' | 'YELLOW' | 'GREEN';
+  triageLabel: string;
+  targetMinutes: number;
+  urgency: 'EMERGENCY' | 'URGENT' | 'ROUTINE';
+  suspectedCategory: string;
+  redFlags: string[];
+  aiSummary: string;
+  keyPoints: string[];
+  essentialQuestions: EssentialQuestion[];
+  patientReassurance: string;
+  queuePosition: number;
+  audio: AudioPayload;
+  heardNothing?: boolean;
+}
+
+export interface EmergencyAnswer {
+  tokenNumber: string;
+  transcript: string;
+  answered: number;
+  totalQuestions: number;
+  nextQuestion: EssentialQuestion | null;
+  triageLevel: 'RED' | 'ORANGE' | 'YELLOW' | 'GREEN';
+  triageLabel: string;
+  triageChanged: boolean;
+  triageReason: string;
+  urgency: 'EMERGENCY' | 'URGENT' | 'ROUTINE';
+  redFlags: string[];
+  queuePosition: number;
+  language: string;
+  done: boolean;
+  audio: AudioPayload;
+  heardNothing?: boolean;
+}
+
 const unwrap = <T,>(response: { data: { success: boolean; data: T; message?: string } }): T => {
   if (!response.data.success) throw new Error(response.data.message || 'Request failed');
   return response.data.data;
@@ -86,8 +147,21 @@ const post = async <T,>(path: string, body?: unknown): Promise<T> => {
 };
 
 export const api = {
+  wake: async (attempts = 3): Promise<boolean> => {
+    for (let i = 0; i < attempts; i++) {
+      try {
+        await http.get('/', { timeout: 90000 });
+        return true;
+      } catch {
+        if (i === attempts - 1) return false;
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+    }
+    return false;
+  },
+
   pipelineHealth: async () => {
-    const response = await http.get('/voice/health');
+    const response = await http.get('/voice/health', { timeout: 90000 });
     return response.data.data as {
       llm: { success: boolean; model: string; modelAvailable: boolean };
       speech: { configured: boolean };
@@ -159,10 +233,18 @@ export const api = {
     }
   },
 
-  createEmergency: (symptoms: string, patientName?: string) =>
-    post<{ tokenNumber: string; patientName: string; symptoms: string; queuePosition: number; status: string }>(
-      '/emergency/handle',
-      { symptoms, patientName }
+  emergencyIntake: (payload: { audio?: string; mimeType?: string; text?: string; language: string }) =>
+    post<EmergencyIntake>('/emergency/intake', payload),
+
+  emergencyAnswer: (
+    tokenNumber: string,
+    payload: { audio?: string; mimeType?: string; text?: string; key?: string; question?: string }
+  ) => post<EmergencyAnswer>(`/emergency/${tokenNumber}/answer`, payload),
+
+  emergencyIdentify: (tokenNumber: string, payload: { faceImage?: string; abhaId?: string; patientName?: string }) =>
+    post<{ found: boolean; reason?: string; patient?: KnownPatient; knownHistory?: Record<string, unknown> }>(
+      `/emergency/${tokenNumber}/identify`,
+      payload
     ),
 
   transcribe: (audio: string, mimeType: string) =>
