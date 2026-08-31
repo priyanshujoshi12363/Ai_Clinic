@@ -14,8 +14,10 @@ export const startConsultation = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Patient not found' });
     }
 
-    const visitId = `VISIT_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    const tokenNumber = `${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 100).toString().padStart(2, '0')}`;
+    const stamp = Date.now();
+    const visitId = `VISIT_${stamp}_${Math.random().toString(36).substr(2, 6)}`;
+    const tokenNumber = `${String(stamp).slice(-6)}${Math.floor(Math.random() * 100).toString().padStart(2, '0')}`;
+    const appointmentId = `APP_${stamp}`;
 
     const visit = {
       visitId,
@@ -24,7 +26,8 @@ export const startConsultation = async (req, res) => {
       hospitalName,
       consultationType,
       status: 'IN_PROGRESS',
-      tokenNumber
+      tokenNumber,
+      appointmentId
     };
 
     patient.visits.push(visit);
@@ -49,7 +52,7 @@ export const startConsultation = async (req, res) => {
         doctorName: doctorName || ''
       },
       appointment: {
-        appointmentId: `APP_${Date.now()}`,
+        appointmentId,
         tokenNumber,
         date: new Date(),
         status: 'KIOSK_IN_PROGRESS'
@@ -227,9 +230,9 @@ export const saveConsultationSummary = async (req, res) => {
     patient.lastVisitDate = new Date();
     await patient.save();
 
-    const hisRecord = await HIS.findOne({
-      'appointment.appointmentId': `APP_${visitId.split('_')[1]}`
-    });
+    const hisRecord = visit.appointmentId
+      ? await HIS.findOne({ 'appointment.appointmentId': visit.appointmentId })
+      : await HIS.findOne({ 'aiCaseTaking.sessionId': visit.sessionId });
 
     if (hisRecord) {
       hisRecord.aiCaseTaking.completedAt = new Date();
@@ -372,9 +375,9 @@ export const generateConsultationAudio = async (req, res) => {
     visit.audioSummary = audioData;
 
     try {
-      const hisRecord = await HIS.findOne({
-        'appointment.appointmentId': `APP_${visitId.split('_')[1]}`
-      });
+      const hisRecord = visit.appointmentId
+        ? await HIS.findOne({ 'appointment.appointmentId': visit.appointmentId })
+        : null;
 
       if (hisRecord) {
         hisRecord.aiCaseTaking.audioSummary = audioData;

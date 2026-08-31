@@ -8,6 +8,8 @@ import faceSearch from "./src/Routes/FaceSearch.js"
 import abhaLink from "./src/Routes/abhaLinkRoutes.js"
 import emergency from "./src/Routes/emergencyRoutes.js"
 import consult from "./src/Routes/ConsulatationRoutes.js"
+import intake from "./src/Routes/intakeRoutes.js"
+import voice from "./src/Routes/voiceRoutes.js"
 dotenv.config();
 
 const app = express();
@@ -23,6 +25,8 @@ app.use("/patient/abha/facesearch" , faceSearch)
 app.use("/patient/abha" , abhaLink)
 app.use("/emergency" , emergency)
 app.use("/consult" , consult)
+app.use("/intake" , intake)
+app.use("/voice" , voice)
 app.get("/", (req, res) => {
   res.json({
     success: true,

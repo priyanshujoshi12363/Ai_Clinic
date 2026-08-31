@@ -305,6 +305,9 @@ const visitSchema = new mongoose.Schema({
   department: { type: String },
   consultationType: { type: String, enum: ['GENERAL_OPD', 'AYUSH'], required: true },
   status: { type: String, enum: ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'], default: 'SCHEDULED' },
+  tokenNumber: { type: String },
+  appointmentId: { type: String },
+  sessionId: { type: String },
   interviewLanguage: { type: String },
   audioTranscripts: [{
     language: { type: String },
@@ -315,9 +318,30 @@ const visitSchema = new mongoose.Schema({
   emergencyFlags: emergencyFlagsSchema,
   clinicalHistory: clinicalHistorySchema,
   ayushHistory: ayushHistorySchema,
+  chiefComplaint: { type: String },
   aiSummary: { type: String },
+  aiSummaryHindi: { type: String },
+  aiKeyPoints: [String],
   aiRedFlags: [String],
   urgency: { type: String, enum: ['EMERGENCY', 'URGENT', 'ROUTINE'] },
+  prescriptions: [{
+    name: String,
+    dosage: String,
+    frequency: String,
+    duration: String,
+    instructions: String,
+    prescribedAt: Date
+  }],
+  audioSummary: {
+    url: { type: String },
+    publicId: { type: String },
+    duration: { type: Number },
+    format: { type: String },
+    bytes: { type: Number },
+    language: { type: String },
+    generatedAt: { type: Date },
+    isActive: { type: Boolean, default: true }
+  },
   doctorReview: doctorReviewSchema
 }, { timestamps: true });
 
