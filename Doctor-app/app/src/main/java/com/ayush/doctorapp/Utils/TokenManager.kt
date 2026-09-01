@@ -1,64 +1,58 @@
-package com.ayush.doctorapp.Utils
+package com.ayush.doctorapp.utils
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import androidx.security.crypto.MasterKey
+import com.ayush.doctorapp.models.LoginResponse
 import com.google.gson.Gson
-import com.ayush.doctorapp.Models.Doctor
-import java.security.GeneralSecurityException
 
-class TokenManager(private val context: Context) {
+class TokenManager(context: Context) {
 
-    private val prefsName = "secure_prefs"
+    private val appContext = context.applicationContext
 
-    private val sharedPreferences: SharedPreferences by lazy {
+    private val prefs: SharedPreferences by lazy {
         try {
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            val masterKey = MasterKey.Builder(appContext)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
             EncryptedSharedPreferences.create(
-                prefsName,
-                masterKeyAlias,
-                context,
+                appContext,
+                PREFS_NAME,
+                masterKey,
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
-        } catch (e: GeneralSecurityException) {
-            Log.w(TAG, "Falling back to plain prefs: ${e.message}")
-            context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
         } catch (e: Exception) {
-            Log.w(TAG, "Falling back to plain prefs: ${e.message}")
-            context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
+            Log.w(TAG, "Encrypted prefs unavailable, falling back: ${e.message}")
+            appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         }
     }
 
-    fun saveToken(token: String) {
-        runCatching { sharedPreferences.edit().putString(Constants.KEY_TOKEN, token).apply() }
+    fun saveSession(login: LoginResponse) {
+        prefs.edit()
+            .putString(Constants.KEY_TOKEN, login.token)
+            .putString(Constants.KEY_DOCTOR, Gson().toJson(login))
+            .apply()
     }
 
-    fun getToken(): String? = runCatching { sharedPreferences.getString(Constants.KEY_TOKEN, null) }.getOrNull()
+    fun getToken(): String? = prefs.getString(Constants.KEY_TOKEN, null)
 
-    fun saveDoctor(doctor: Doctor) {
-        runCatching {
-            val json = Gson().toJson(doctor)
-            sharedPreferences.edit().putString(Constants.KEY_DOCTOR_DATA, json).apply()
+    fun bearer(): String = "Bearer ${getToken().orEmpty()}"
+
+    fun getDoctor(): LoginResponse? = runCatching {
+        prefs.getString(Constants.KEY_DOCTOR, null)?.let {
+            Gson().fromJson(it, LoginResponse::class.java)
         }
-    }
+    }.getOrNull()
 
-    fun getDoctor(): Doctor? {
-        return runCatching {
-            val json = sharedPreferences.getString(Constants.KEY_DOCTOR_DATA, null)
-            if (json != null) Gson().fromJson(json, Doctor::class.java) else null
-        }.getOrNull()
-    }
+    fun isLoggedIn(): Boolean = !getToken().isNullOrBlank()
 
-    fun clearAll() {
-        runCatching { sharedPreferences.edit().clear().apply() }
-    }
-
-    fun isLoggedIn(): Boolean = !getToken().isNullOrEmpty()
+    fun clear() = prefs.edit().clear().apply()
 
     companion object {
+        private const val PREFS_NAME = "doctor_secure_prefs"
         private const val TAG = "TokenManager"
     }
 }

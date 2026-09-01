@@ -1,57 +1,56 @@
-package com.ayush.doctorapp.Network
+package com.ayush.doctorapp.network
 
-import com.ayush.doctorapp.Models.*
+import com.ayush.doctorapp.models.*
 import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiService {
-    
+
     @POST("doctor/register")
-    suspend fun registerDoctor(
-        @Body request: RegisterRequest
-    ): Response<ApiResponse<LoginResponse>>
-    
+    suspend fun registerDoctor(@Body request: RegisterRequest): Response<ApiResponse<LoginResponse>>
+
     @POST("doctor/login")
-    suspend fun loginDoctor(
-        @Body request: LoginRequest
-    ): Response<ApiResponse<LoginResponse>>
-    
+    suspend fun loginDoctor(@Body request: LoginRequest): Response<ApiResponse<LoginResponse>>
+
     @GET("doctor/profile")
-    suspend fun getProfile(
-        @Header("Authorization") token: String
-    ): Response<ApiResponse<Doctor>>
-    
-    @PUT("doctor/profile")
-    suspend fun updateProfile(
-        @Header("Authorization") token: String,
-        @Body doctor: Doctor
-    ): Response<ApiResponse<Doctor>>
-    
+    suspend fun getProfile(@Header("Authorization") token: String): Response<ApiResponse<Doctor>>
+
     @PUT("doctor/change-password")
     suspend fun changePassword(
         @Header("Authorization") token: String,
         @Body request: ChangePasswordRequest
     ): Response<ApiResponse<Unit>>
-    
+
     @POST("doctor/logout")
-    suspend fun logout(
-        @Header("Authorization") token: String
-    ): Response<ApiResponse<Unit>>
-    
-    @GET("patients")
-    suspend fun getPatients(
-        @Header("Authorization") token: String
-    ): Response<ApiResponse<List<Patient>>>
-    
-    @GET("patient/abha/{abhaId}")
-    suspend fun getPatientById(
-        @Header("Authorization") token: String,
-        @Path("abhaId") abhaId: String
-    ): Response<ApiResponse<Patient>>
-    
-    @POST("patient/abha/facesearch/search")
-    suspend fun searchByFace(
-        @Header("Authorization") token: String,
-        @Body request: FaceSearchRequest
-    ): Response<ApiResponse<FaceSearchResponse>>
+    suspend fun logout(@Header("Authorization") token: String): Response<ApiResponse<Unit>>
+
+    @GET("intake/queue")
+    suspend fun getOpdQueue(@Query("mode") mode: String? = null): Response<ApiResponse<List<OpdCase>>>
+
+    @GET("intake/{sessionId}")
+    suspend fun getSession(@Path("sessionId") sessionId: String): Response<ApiResponse<IntakeSession>>
+
+    @POST("intake/{sessionId}/briefing")
+    suspend fun getSessionBriefing(
+        @Path("sessionId") sessionId: String,
+        @Body request: BriefingRequest
+    ): Response<ApiResponse<BriefingResponse>>
+
+    @GET("emergency/queue")
+    suspend fun getEmergencyQueue(): Response<ApiResponse<List<EmergencyCase>>>
+
+    @GET("emergency/{tokenNumber}")
+    suspend fun getEmergencyCase(@Path("tokenNumber") tokenNumber: String): Response<ApiResponse<EmergencyCase>>
+
+    @PUT("emergency/{tokenNumber}/status")
+    suspend fun updateEmergencyStatus(
+        @Path("tokenNumber") tokenNumber: String,
+        @Body request: StatusUpdate
+    ): Response<ApiResponse<EmergencyCase>>
+
+    @POST("emergency/{tokenNumber}/briefing")
+    suspend fun getEmergencyBriefing(
+        @Path("tokenNumber") tokenNumber: String,
+        @Body request: BriefingRequest
+    ): Response<ApiResponse<BriefingResponse>>
 }

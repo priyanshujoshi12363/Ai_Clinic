@@ -278,7 +278,7 @@ const doctorReviewSchema = new mongoose.Schema({
 });
 
 const sessionSchema = new mongoose.Schema({
-  sessionId: { type: String, required: true, unique: true },
+  sessionId: { type: String, required: true },
   startedAt: { type: Date, default: Date.now },
   endedAt: { type: Date },
   status: { type: String, enum: ['ACTIVE', 'COMPLETED', 'EXPIRED'], default: 'ACTIVE' },
@@ -298,7 +298,7 @@ const timelineEntrySchema = new mongoose.Schema({
 });
 
 const visitSchema = new mongoose.Schema({
-  visitId: { type: String, required: true, unique: true },
+  visitId: { type: String, required: true },
   date: { type: Date, required: true },
   hospitalId: { type: String, required: true },
   hospitalName: { type: String, required: true },
@@ -356,7 +356,7 @@ const testSchema = new mongoose.Schema({
 });
 
 const labReportSchema = new mongoose.Schema({
-  reportId: { type: String, required: true, unique: true },
+  reportId: { type: String, required: true },
   date: { type: Date, required: true },
   hospitalId: { type: String },
   labName: { type: String },
@@ -379,7 +379,7 @@ const medicineSchema = new mongoose.Schema({
 });
 
 const prescriptionSchema = new mongoose.Schema({
-  prescriptionId: { type: String, required: true, unique: true },
+  prescriptionId: { type: String, required: true },
   date: { type: Date, required: true },
   visitId: { type: String },
   hospitalId: { type: String },
@@ -393,7 +393,7 @@ const prescriptionSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const documentSchema = new mongoose.Schema({
-  documentId: { type: String, required: true, unique: true },
+  documentId: { type: String, required: true },
   type: { type: String, enum: ['PRESCRIPTION', 'LAB_REPORT', 'DISCHARGE_SUMMARY', 'AYURVEDA_PRESCRIPTION', 'OTHER'] },
   date: { type: Date },
   sourceHospital: { type: String },
@@ -416,7 +416,7 @@ const dataAccessSchema = new mongoose.Schema({
 });
 
 const consentSchema = new mongoose.Schema({
-  consentId: { type: String, required: true, unique: true },
+  consentId: { type: String, required: true },
   hospitalId: { type: String, required: true },
   hospitalName: { type: String, required: true },
   purpose: { type: String },

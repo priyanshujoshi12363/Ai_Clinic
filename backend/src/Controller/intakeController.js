@@ -12,8 +12,16 @@ import {
   extractDocument,
   sectionsForMode,
   detectRedFlags,
-  highestUrgency
+  highestUrgency,
+  classifyIntent,
+  extractDigits
 } from '../services/intakeEngine.js';
+import { linkFaceToABHA, getPatientByABHA as getAbhaSummary } from '../services/abhaLinkService.js';
+import {
+  findAadhaarByNumber,
+  generateOTP,
+  registerPatientWithAadhaarAndFace
+} from '../services/registrationService.js';
 
 const MIN_CHARS_FOR_LANGUAGE_SWITCH = 8;
 
@@ -142,37 +150,208 @@ export const identifyByFace = async (req, res) => {
   }
 };
 
-export const identifyByAbha = async (req, res) => {
+const patientCard = (context, extra = {}) => ({
+  abhaId: context.doc.abhaId,
+  name: context.name,
+  age: context.age,
+  gender: context.gender,
+  mobile: context.doc.mobile,
+  conditions: context.conditions,
+  allergies: context.allergies,
+  medicines: context.medicines,
+  totalVisits: context.doc.totalVisits,
+  lastVisitDate: context.doc.lastVisitDate,
+  hasDigitisedRecords: (context.doc.documents?.length || 0) > 0,
+  ...extra
+});
+
+const cleanDigits = (value) => String(value || '').replace(/\D/g, '');
+
+const safeDate = (value, fallback = null) => {
+  if (!value) return fallback;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? fallback : d;
+};
+
+export const transcribeField = async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const { abhaId, method = 'ABHA' } = req.body;
+    const { audio, mimeType = 'audio/webm', field = 'digits', expected } = req.body;
+
+    const session = await loadSession(sessionId);
+    if (!session) return fail(res, 'Session not found', 404);
+    if (!audio) return fail(res, 'Audio is required');
+
+    const heard = await speechToText(audio, { languageHint: 'unknown', mimeType });
+    if (!heard.success) return fail(res, `Speech recognition failed: ${heard.message}`, 502);
+    if (!heard.transcript) return ok(res, { heardNothing: true, language: session.language });
+
+    if (heard.detectedLanguage && heard.transcript.length >= 8 && heard.detectedLanguage !== session.language) {
+      session.language = heard.detectedLanguage;
+      await session.save();
+    }
+
+    if (field === 'aadhaar' || field === 'digits') {
+      const { digits } = await extractDigits({ transcript: heard.transcript, expected: expected || 12 });
+      return ok(res, { transcript: heard.transcript, digits, language: session.language });
+    }
+
+    return ok(res, { transcript: heard.transcript, language: session.language });
+  } catch (error) {
+    return fail(res, error.message, 500);
+  }
+};
+
+export const voiceIntent = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { audio, mimeType = 'audio/webm', text, task = 'yesno' } = req.body;
 
     const session = await loadSession(sessionId);
     if (!session) return fail(res, 'Session not found', 404);
 
-    const context = await patientContext(abhaId);
-    if (!context) return fail(res, 'Patient not found for this ABHA ID', 404);
+    let transcript = (text || '').trim();
 
-    session.abhaId = abhaId;
+    if (!transcript) {
+      if (!audio) return fail(res, 'Provide audio or text');
+      const heard = await speechToText(audio, { languageHint: 'unknown', mimeType });
+      if (!heard.success) return fail(res, `Speech recognition failed: ${heard.message}`, 502);
+      transcript = (heard.transcript || '').trim();
+
+      if (heard.detectedLanguage && transcript.length >= 8 && heard.detectedLanguage !== session.language) {
+        session.language = heard.detectedLanguage;
+        await session.save();
+      }
+    }
+
+    if (!transcript) return ok(res, { heardNothing: true, language: session.language });
+
+    const intent = await classifyIntent({ transcript, task, language: session.language });
+
+    return ok(res, { transcript, intent, task, language: session.language });
+  } catch (error) {
+    return fail(res, error.message, 500);
+  }
+};
+
+export const identifyByAbha = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { abhaId, method = 'ABHA', faceImage } = req.body;
+
+    const session = await loadSession(sessionId);
+    if (!session) return fail(res, 'Session not found', 404);
+    if (!abhaId) return fail(res, 'ABHA ID is required');
+
+    const context = await patientContext(abhaId);
+    if (!context) {
+      return ok(res, { found: false, reason: 'No patient found for this ABHA ID' });
+    }
+
+    let faceLinked = false;
+    const alreadyHasFace = Boolean(context.doc.faceData?.faceEmbedding?.length);
+
+    if (faceImage && !alreadyHasFace) {
+      const link = await linkFaceToABHA(abhaId, faceImage);
+      faceLinked = link.success;
+    }
+
+    session.abhaId = context.doc.abhaId;
     session.patientName = context.name;
-    session.identificationMethod = method;
+    session.identificationMethod = faceImage ? 'FACE' : method;
     session.stage = 'IDENTIFIED';
     await session.save();
 
     return ok(res, {
       found: true,
-      patient: {
-        abhaId,
-        name: context.name,
-        age: context.age,
-        gender: context.gender,
-        mobile: context.doc.mobile,
-        conditions: context.conditions,
-        allergies: context.allergies,
-        medicines: context.medicines,
-        totalVisits: context.doc.totalVisits,
-        lastVisitDate: context.doc.lastVisitDate,
-        hasDigitisedRecords: (context.doc.documents?.length || 0) > 0
+      faceLinked,
+      patient: patientCard(context),
+      stage: session.stage
+    });
+  } catch (error) {
+    return fail(res, error.message, 500);
+  }
+};
+
+export const verifyAadhaarForIntake = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { aadhaarNumber } = req.body;
+
+    const session = await loadSession(sessionId);
+    if (!session) return fail(res, 'Session not found', 404);
+
+    const digits = cleanDigits(aadhaarNumber);
+    if (digits.length !== 12) return fail(res, 'Aadhaar must be 12 digits');
+
+    const found = findAadhaarByNumber(digits);
+    if (!found.success) return ok(res, { found: false, reason: 'Aadhaar not found in records' });
+
+    const existing = await Patient.findOne({ aadhaarNumber: digits });
+    const otpResult = generateOTP(digits);
+
+    return ok(res, {
+      found: true,
+      name: found.data.name,
+      dateOfBirth: found.data.dateOfBirth,
+      gender: found.data.gender === 'M' ? 'Male' : found.data.gender === 'F' ? 'Female' : found.data.gender,
+      alreadyRegistered: Boolean(existing),
+      abhaId: existing?.abhaId || null,
+      otp: otpResult.data?.otp || null,
+      mobile: otpResult.data?.mobile || found.data.mobile || null
+    });
+  } catch (error) {
+    return fail(res, error.message, 500);
+  }
+};
+
+export const registerByAadhaar = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { aadhaarNumber, otp, faceImage } = req.body;
+
+    const session = await loadSession(sessionId);
+    if (!session) return fail(res, 'Session not found', 404);
+
+    const digits = cleanDigits(aadhaarNumber);
+    if (digits.length !== 12) return fail(res, 'Aadhaar must be 12 digits');
+    if (!otp) return fail(res, 'OTP is required');
+    if (!faceImage) return fail(res, 'Face image is required to complete registration');
+
+    const result = await registerPatientWithAadhaarAndFace(digits, otp, faceImage);
+    if (!result.success) {
+      if (result.data?.alreadyRegistered && result.data?.abhaId) {
+        const context = await patientContext(result.data.abhaId);
+        session.abhaId = result.data.abhaId;
+        session.patientName = context?.name || result.data.name;
+        session.identificationMethod = 'FACE';
+        session.stage = 'IDENTIFIED';
+        await session.save();
+        return ok(res, { registered: false, alreadyRegistered: true, patient: context ? patientCard(context) : { abhaId: result.data.abhaId, name: result.data.name } });
+      }
+      return fail(res, result.message);
+    }
+
+    const context = await patientContext(result.data.abhaId);
+
+    session.abhaId = result.data.abhaId;
+    session.patientName = result.data.name;
+    session.identificationMethod = 'FACE';
+    session.isNewPatient = true;
+    session.stage = 'IDENTIFIED';
+    await session.save();
+
+    return ok(res, {
+      registered: true,
+      newAbhaId: result.data.abhaId,
+      patient: context ? patientCard(context, { isNewPatient: true }) : {
+        abhaId: result.data.abhaId,
+        name: result.data.name,
+        gender: result.data.gender,
+        isNewPatient: true,
+        conditions: [],
+        allergies: [],
+        medicines: []
       },
       stage: session.stage
     });
@@ -599,7 +778,7 @@ const timelineFromDocuments = (documents) => {
   const entries = [];
 
   for (const doc of documents) {
-    const date = doc.date ? new Date(doc.date) : null;
+    const date = safeDate(doc.date);
     if (!date || Number.isNaN(date.getTime())) continue;
 
     for (const dx of doc.diagnoses || []) {
@@ -680,8 +859,8 @@ export const finalizeSession = async (req, res) => {
       for (const doc of session.documents) {
         patient.documents.push({
           documentId: doc.documentId,
-          type: doc.documentType,
-          date: doc.date ? new Date(doc.date) : undefined,
+          type: ['PRESCRIPTION','LAB_REPORT','DISCHARGE_SUMMARY','AYURVEDA_PRESCRIPTION','OTHER'].includes(doc.documentType) ? doc.documentType : 'OTHER',
+          date: safeDate(doc.date, undefined) || undefined,
           sourceHospital: doc.hospital,
           fileUrl: doc.fileUrl || 'kiosk-capture-not-stored',
           fileType: 'image/jpeg',
@@ -701,7 +880,7 @@ export const finalizeSession = async (req, res) => {
         if ((doc.investigations || []).length) {
           patient.labReports.push({
             reportId: `LAB_${doc.documentId}`,
-            date: doc.date ? new Date(doc.date) : new Date(),
+            date: safeDate(doc.date, new Date()),
             labName: doc.hospital || 'Patient-supplied report',
             visitId,
             status: 'FINAL',
@@ -1083,12 +1262,12 @@ export const doctorBriefingAudio = async (req, res) => {
 
     const session = await loadSession(sessionId);
     if (!session) return fail(res, 'Session not found', 404);
-    if (!session.voiceBriefing) return fail(res, 'No briefing available for this session');
 
-    const audio = await speak(session.voiceBriefing, language);
-    if (!audio) return fail(res, 'Text to speech failed', 502);
+    const text = session.voiceBriefing || session.summary || 'No summary available for this patient yet.';
+    const audio = await speak(text, language);
 
-    return ok(res, { text: session.voiceBriefing, ...audio });
+    // Never 502: hand back the text so the doctor app can show it even if TTS is unavailable.
+    return ok(res, { text, audios: audio?.audios || [], format: audio?.format || 'wav', language });
   } catch (error) {
     return fail(res, error.message, 500);
   }

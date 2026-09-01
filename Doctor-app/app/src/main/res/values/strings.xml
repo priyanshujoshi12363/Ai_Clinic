@@ -1,12 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Doctor App</string>
-    <string name="login">Login</string>
-    <string name="register">Register</string>
+    <string name="app_name">AI Clinical · Doctor</string>
+    <string name="tagline">Patient speaks · AI organises · Doctor decides</string>
+
+    <string name="login">Sign in</string>
+    <string name="login_title">Doctor sign in</string>
+    <string name="login_subtitle">Access your prepared patient queue</string>
+    <string name="register">Create account</string>
+    <string name="register_title">Register as a doctor</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
+    <string name="no_account">New here? Create an account</string>
+    <string name="have_account">Already registered? Sign in</string>
+
+    <string name="tab_opd">OPD Queue</string>
+    <string name="tab_emergency">Emergency</string>
     <string name="dashboard">Dashboard</string>
-    <string name="logout">Logout</string>
+    <string name="logout">Sign out</string>
     <string name="profile">Profile</string>
-    <string name="patients">Patients</string>
+
+    <string name="listen_summary">Listen to summary</string>
+    <string name="stop_audio">Stop</string>
+    <string name="accept_case">Start consultation</string>
+    <string name="complete_case">Mark completed</string>
+
+    <string name="empty_opd">No patients waiting.\nCompleted kiosk intakes appear here.</string>
+    <string name="empty_emergency">No emergency cases.\nTriaged arrivals appear here instantly.</string>
+
+    <string name="ai_disclaimer">AI-prepared draft. Review and confirm before acting.</string>
 </resources>

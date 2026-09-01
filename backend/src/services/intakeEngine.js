@@ -190,6 +190,61 @@ const LANGUAGE_NAMES = {
 
 export const languageName = (code) => LANGUAGE_NAMES[code] || 'Hindi (Devanagari script)';
 
+export const classifyIntent = async ({ transcript, task, language }) => {
+  const tasks = {
+    yesno: 'The patient is answering a yes/no question. Decide if they agreed/confirmed (YES), disagreed/declined (NO), or it is unclear (UNCLEAR).',
+    mode: 'The patient is choosing which doctor to see. Decide GENERAL if they want a normal/allopathic/regular doctor, AYUSH if they want an ayurvedic/ayurveda/vaidya/herbal doctor, or UNCLEAR.',
+    haveAbha: 'Decide if the patient is saying they HAVE an ABHA / health id card (YES), do NOT have one (NO), or UNCLEAR.',
+    ready: 'Decide if the patient indicated they are ready/looking at the camera (YES) or not (UNCLEAR).'
+  };
+
+  const options = {
+    yesno: '"YES" | "NO" | "UNCLEAR"',
+    mode: '"GENERAL" | "AYUSH" | "UNCLEAR"',
+    haveAbha: '"YES" | "NO" | "UNCLEAR"',
+    ready: '"YES" | "UNCLEAR"'
+  };
+
+  const result = await chatJSON(
+    [
+      {
+        role: 'system',
+        content: `You interpret a short spoken reply from a hospital kiosk user who may speak Hindi, English or a regional Indian language. ${tasks[task] || tasks.yesno}
+Understand the MEANING and intent, not exact words. Real people answer casually.
+Agreement / YES examples: "haan", "ha", "haan ji", "haan le lo", "le lo", "theek hai", "thik hai", "sahi hai", "chalega", "chal jayega", "kar do", "kar dijiye", "bilkul", "ji", "ok", "okay", "yes", "yeah", "sure", "aage badho", "haan karo".
+Refusal / NO examples: "nahi", "na", "nahi chahiye", "mat karo", "rehne do", "galat", "no", "nope", "cancel".
+If the reply clearly agrees, return YES. If it clearly refuses, return NO. Only return UNCLEAR when you genuinely cannot tell.
+Reply with JSON only: { "intent": ${options[task] || options.yesno} }`
+      },
+      { role: 'user', content: `The user said: "${transcript}"` }
+    ],
+    { temperature: 0 }
+  );
+
+  return result.intent || 'UNCLEAR';
+};
+
+export const extractDigits = async ({ transcript, expected }) => {
+  const naive = String(transcript || '').replace(/\D/g, '');
+  if (naive.length >= (expected || 0)) {
+    return { digits: naive, spoken: transcript };
+  }
+
+  const result = await chatJSON(
+    [
+      {
+        role: 'system',
+        content: `The user spoke a ${expected ? expected + '-digit ' : ''}number aloud, possibly in Hindi or another Indian language (for example "do teen chaar" = 234, "पाँच" = 5). Convert everything they said into the digit string only.
+Reply with JSON only: { "digits": "<digits with no spaces or other characters>" }`
+      },
+      { role: 'user', content: `The user said: "${transcript}"` }
+    ],
+    { temperature: 0 }
+  );
+
+  return { digits: String(result.digits || naive).replace(/\D/g, ''), spoken: transcript };
+};
+
 const buildSystemPrompt = (mode, language, patient) => {
   const sections = sectionsForMode(mode);
   const plan = sections
@@ -252,9 +307,24 @@ You collect information. The doctor decides.
 INTERVIEW PLAN — fill every section before finishing:
 ${plan}
 
-Work through the plan in order, but stay adaptive: if an answer opens something
-important, follow it up before moving on. If the patient already answered a later
-section spontaneously, record it and skip that question.
+HOW TO CHOOSE THE NEXT QUESTION — this is what makes you feel like a real doctor:
+- The plan is a checklist, NOT a script. Never read it out mechanically.
+- Let the chief complaint drive everything. Ask the follow-ups that a doctor would
+  actually ask for THIS complaint. Chest pain → onset, character, radiation, exertion,
+  breathlessness, sweating. Cough → duration, dry or with phlegm, blood, fever, weight
+  loss, night sweats. Headache → onset, side, throbbing, vision, vomiting. Abdominal pain
+  → site, relation to food, vomiting, bowel change. Fever → duration, pattern, chills,
+  travel, urinary symptoms. Joint pain → which joints, morning stiffness, swelling.
+  Pick the single most useful next question for what they just said.
+- USE WHAT YOU ALREADY KNOW about this patient. If their record shows diabetes or
+  hypertension and they have a relevant complaint, probe the link (e.g. chest pain in a
+  known diabetic → ask harder about cardiac features). Never re-ask something already on
+  file — confirm it in one clause instead.
+- Tailor to the person: an elderly patient, a child's attendant, or a young adult get
+  different emphasis. Ask about pregnancy only where relevant. Match their words.
+- If an answer opens something important, follow it up before moving on. If the patient
+  already answered a later section spontaneously, record it and skip that question.
+- Do not ask two things at once, and do not interrogate — one natural question per turn.
 
 CORRECTIONS:
 If the patient says you got something wrong ("no, five years not three",
@@ -427,24 +497,32 @@ Also include the standard clinical history alongside.`
     : 'This is a General OPD case. Use standard clinical documentation order.'}
 
 RULES:
-- Write "summary" in professional clinical English for the doctor.
+- "summary" must be SHORT and scannable — NOT a long paragraph. Use these exact one-line
+  headings, each on its own line, and write a terse phrase after each (not full sentences).
+  Omit a line entirely if there is nothing for it. Aim for 5 to 8 lines total:
+    CC: <chief complaint with duration>
+    HPI: <key features in a few words>
+    PMH: <past illnesses or "none">
+    Meds: <current medicines or "none">
+    Allergies: <or "none">
+    O/E prior records: <abnormal labs / key document findings, if any>
+    Red flags: <if any>
+  Keep the whole thing tight — a doctor should read it in ten seconds.
 - Report only what the patient actually said or what the documents showed.
-- If something was not asked or not answered, write "not elicited" — never fill a gap.
+- If something was not asked or not answered, leave that line out — never invent.
 - Do NOT diagnose. Do NOT suggest investigations or treatment. Describe, do not decide.
-- "patientReadBack" is different: it is for the PATIENT, spoken aloud in
-  ${languageName(language)}, plain and warm, 4 to 6 short sentences, restating what was
-  recorded so they can confirm or correct it. No medical terms. It must end by asking
+- "patientReadBack" is for the PATIENT, spoken aloud in ${languageName(language)}, plain and
+  warm, 3 to 4 short sentences restating what was recorded. No medical terms. End by asking
   whether everything is correct.
-- "voiceBriefing" is for the DOCTOR, read aloud in about 30 seconds of English speech:
-  age, sex, main complaint with duration, the few facts that change management, then
-  red flags. Write it as flowing spoken sentences, not bullet points, no abbreviations
-  the ear cannot parse.
+- "voiceBriefing" is for the DOCTOR, read aloud: 2 to 3 short spoken sentences only — age,
+  sex, main complaint with duration, the one or two facts that change management, then red
+  flags. Flowing speech, no abbreviations the ear cannot parse. Keep it under 20 seconds.
 
 Reply with this JSON only:
 {
-  "summary": "<structured clinical summary, use \\n line breaks and clear headings>",
+  "summary": "<short line-per-heading summary as specified, using \\n between lines>",
   "chiefComplaint": "",
-  "keyPoints": ["<5 to 8 short factual bullets the doctor must not miss>"],
+  "keyPoints": ["<4 to 6 very short factual bullets the doctor must not miss>"],
   "redFlags": ["<danger signs, English>"],
   "urgency": "EMERGENCY" | "URGENT" | "ROUTINE",
   "clinicalHistory": {

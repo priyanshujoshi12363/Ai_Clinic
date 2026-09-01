@@ -1,7 +1,5 @@
-package com.ayush.doctorapp.Network
+package com.ayush.doctorapp.network
 
-import com.ayush.doctorapp.Network.ApiService
-import com.ayush.doctorapp.Network.FakeApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -9,38 +7,36 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    private const val BASE_URL = "https://ai-clinic-ih2c.onrender.com/"
 
-    private const val USE_FAKE = true
+    const val BASE_URL = "https://ai-clinic-ih2c.onrender.com/"
 
     private val client by lazy {
-        val interceptor = HttpLoggingInterceptor()
-        interceptor.level = HttpLoggingInterceptor.Level.BODY
+        val logging = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BASIC
+        }
 
         OkHttpClient.Builder()
-            .addInterceptor(interceptor)
+            .addInterceptor(logging)
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
                     .addHeader("Content-Type", "application/json")
+                    .addHeader("Accept", "application/json")
                     .build()
                 chain.proceed(request)
             }
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(90, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(90, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
             .build()
     }
 
     val apiService: ApiService by lazy {
-        if (USE_FAKE) {
-            FakeApiService()
-        } else {
-            Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-                .create(ApiService::class.java)
-        }
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
     }
 }

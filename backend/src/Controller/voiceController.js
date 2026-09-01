@@ -31,13 +31,13 @@ export const transcribe = async (req, res) => {
 
 export const synthesize = async (req, res) => {
   try {
-    const { text, language = 'hi-IN' } = req.body;
+    const { text, language = 'hi-IN', speaker, pace } = req.body;
 
     if (!text) {
       return res.status(400).json({ success: false, message: 'Text is required' });
     }
 
-    const result = await textToSpeech(text, language);
+    const result = await textToSpeech(text, language, { speaker, pace });
 
     if (!result.success) {
       return res.status(502).json({ success: false, message: result.message });

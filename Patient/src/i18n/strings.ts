@@ -95,6 +95,43 @@ export interface Copy {
   errorTitle: string;
   loading: string;
   starting: string;
+
+  speakGreeting: string;
+  speakConsent: string;
+  sayYesNo: string;
+  speakFaceIntro: string;
+  speakFaceCountdown: string;
+  speakSearching: string;
+  speakAskAbha: string;
+  speakSayAbha: string;
+  speakSayAadhaar: string;
+  speakLinkPhoto: string;
+  speakRegistering: string;
+  speakWelcomeBack: string;
+  speakConfirmYou: string;
+  speakAskMode: string;
+  speakAskDocuments: string;
+  speakShowDocument: string;
+  speakReadingDoc: string;
+  speakMoreDocuments: string;
+  speakReviewIntro: string;
+  speakAllCorrect: string;
+  speakWhatWrong: string;
+  speakNotFound: string;
+  speakDidNotCatch: string;
+  speakTokenIs: string;
+  speakConfirmNumber: string;
+  speakRegisterAsk: string;
+  speakFaceUnclear: string;
+  listeningLabel: string;
+  speakingLabel: string;
+  processingLabel: string;
+  heardYou: string;
+  tapRepeat: string;
+  emWhat: string;
+  emName: string;
+  emSent: string;
+  emDidNot: string;
 }
 
 const en: Copy = {
@@ -193,7 +230,44 @@ const en: Copy = {
   retry: 'Try again',
   errorTitle: 'Something went wrong',
   loading: 'Please wait…',
-  starting: 'Getting ready…'
+  starting: 'Getting ready…',
+
+  speakGreeting: 'Hello, I am your health assistant. I will ask you a few questions by voice and prepare everything for the doctor. Just speak naturally, you do not need to touch anything.',
+  speakConsent: 'I will ask you a few questions about your health, and I will also look at your previous medical history and any old records you have. All of this stays private and is shared only with your doctor. Shall I go ahead? You can just tell me in your own words.',
+  sayYesNo: 'Please say yes or no.',
+  speakFaceIntro: 'Now I will identify you. Please look straight at the camera.',
+  speakFaceCountdown: 'Taking your photo. Please hold still.',
+  speakSearching: 'Please wait, I am finding your record.',
+  speakAskAbha: 'I could not find you. Do you have an ABHA health card number? Please say yes or no.',
+  speakSayAbha: 'Please say your ABHA number slowly.',
+  speakSayAadhaar: 'Please say your twelve digit Aadhaar number slowly.',
+  speakLinkPhoto: 'Thank you. Now please look at the camera so I can save your photo.',
+  speakRegistering: 'Please wait, I am creating your health record.',
+  speakWelcomeBack: 'Welcome',
+  speakConfirmYou: 'Is this you? Please say yes or no.',
+  speakAskMode: 'Do you want to see a normal doctor, or an Ayurvedic doctor? Please say normal or Ayurvedic.',
+  speakAskDocuments: 'Do you have any old prescriptions or test reports with you? Please say yes or no.',
+  speakShowDocument: 'Please hold the paper flat in front of the camera.',
+  speakReadingDoc: 'Please wait, I am reading your document.',
+  speakMoreDocuments: 'Do you have another paper to show? Please say yes or no.',
+  speakReviewIntro: 'Here is everything I have noted. Please listen carefully.',
+  speakAllCorrect: 'Is all of this correct? Please say yes, or tell me what is wrong.',
+  speakWhatWrong: 'Please tell me what is wrong.',
+  speakNotFound: 'I could not find your details.',
+  speakDidNotCatch: 'Sorry, I did not catch that. Please say it again.',
+  speakTokenIs: 'Everything is done. Your token number is',
+  speakConfirmNumber: 'Is this number correct?',
+  speakRegisterAsk: 'You do not have a health record yet, so I will register you now and create your ABHA health id. Shall I go ahead? You can tell me yes or no.',
+  speakFaceUnclear: 'I could not see your face clearly. Please look straight at the camera in good light, and hold still.',
+  listeningLabel: 'Listening… please speak',
+  speakingLabel: 'Assistant is speaking…',
+  processingLabel: 'One moment…',
+  heardYou: 'You said',
+  tapRepeat: 'Repeat',
+  emWhat: 'This is emergency help. Please tell me what happened. You can speak now.',
+  emName: 'What is the name of the patient?',
+  emSent: 'Thank you. The emergency team has been alerted and is coming. Please stay right here.',
+  emDidNot: 'Please tell me what happened. You can speak now.'
 };
 
 const hi: Copy = {
@@ -292,7 +366,44 @@ const hi: Copy = {
   retry: 'फिर कोशिश करें',
   errorTitle: 'कुछ गड़बड़ हुई',
   loading: 'कृपया रुकिए…',
-  starting: 'तैयार हो रहे हैं…'
+  starting: 'तैयार हो रहे हैं…',
+
+  speakGreeting: 'नमस्ते, मैं आपकी स्वास्थ्य सहायक हूँ। मैं आपसे बोलकर कुछ सवाल पूछूँगी और डॉक्टर के लिए सब कुछ तैयार कर दूँगी। आप बस आराम से बोलिए, आपको कुछ छूने की ज़रूरत नहीं है।',
+  speakConsent: 'मैं आपसे आपकी सेहत के बारे में कुछ सवाल पूछूँगी, और अगर आपने पहले कहीं इलाज कराया है तो आपका पुराना मेडिकल रिकॉर्ड भी देखूँगी। यह सारी जानकारी निजी रहेगी और सिर्फ़ आपके डॉक्टर के साथ साझा होगी। क्या मैं आगे बढ़ूँ? आप अपने शब्दों में बता सकते हैं।',
+  sayYesNo: 'कृपया हाँ या ना कहिए।',
+  speakFaceIntro: 'अब मैं आपको पहचानूँगी। कृपया सीधे कैमरे की ओर देखिए।',
+  speakFaceCountdown: 'आपकी फ़ोटो ले रही हूँ। कृपया स्थिर रहिए।',
+  speakSearching: 'कृपया रुकिए, मैं आपका रिकॉर्ड ढूँढ़ रही हूँ।',
+  speakAskAbha: 'मुझे आप नहीं मिले। क्या आपके पास आभा हेल्थ कार्ड नंबर है? कृपया हाँ या ना कहिए।',
+  speakSayAbha: 'कृपया अपना आभा नंबर धीरे-धीरे बोलिए।',
+  speakSayAadhaar: 'कृपया अपना बारह अंकों का आधार नंबर धीरे-धीरे बोलिए।',
+  speakLinkPhoto: 'धन्यवाद। अब कृपया कैमरे की ओर देखिए ताकि मैं आपकी फ़ोटो सुरक्षित कर सकूँ।',
+  speakRegistering: 'कृपया रुकिए, मैं आपका स्वास्थ्य रिकॉर्ड बना रही हूँ।',
+  speakWelcomeBack: 'आपका स्वागत है',
+  speakConfirmYou: 'क्या यह आप ही हैं? कृपया हाँ या ना कहिए।',
+  speakAskMode: 'आप सामान्य डॉक्टर को दिखाना चाहते हैं या आयुर्वेदिक डॉक्टर को? कृपया सामान्य या आयुर्वेदिक कहिए।',
+  speakAskDocuments: 'क्या आपके पास कोई पुरानी पर्ची या जाँच रिपोर्ट है? कृपया हाँ या ना कहिए।',
+  speakShowDocument: 'कृपया काग़ज़ को कैमरे के सामने सीधा रखिए।',
+  speakReadingDoc: 'कृपया रुकिए, मैं आपका काग़ज़ पढ़ रही हूँ।',
+  speakMoreDocuments: 'क्या आपके पास दिखाने के लिए एक और काग़ज़ है? कृपया हाँ या ना कहिए।',
+  speakReviewIntro: 'यह सब कुछ है जो मैंने दर्ज किया है। कृपया ध्यान से सुनिए।',
+  speakAllCorrect: 'क्या यह सब सही है? कृपया हाँ कहिए, या बताइए क्या ग़लत है।',
+  speakWhatWrong: 'कृपया बताइए क्या ग़लत है।',
+  speakNotFound: 'मुझे आपकी जानकारी नहीं मिली।',
+  speakDidNotCatch: 'माफ़ कीजिए, मैं समझ नहीं पाई। कृपया फिर से कहिए।',
+  speakTokenIs: 'सब हो गया। आपका टोकन नंबर है',
+  speakConfirmNumber: 'क्या यह नंबर सही है?',
+  speakRegisterAsk: 'आपका अभी तक कोई रिकॉर्ड नहीं है, इसलिए मैं अभी आपका रजिस्ट्रेशन करके आपकी आभा हेल्थ आईडी बना दूँगी। क्या मैं आगे बढ़ूँ? आप हाँ या ना बता सकते हैं।',
+  speakFaceUnclear: 'मैं आपका चेहरा साफ़ नहीं देख पाई। कृपया अच्छी रोशनी में सीधे कैमरे की ओर देखिए और स्थिर रहिए।',
+  listeningLabel: 'सुन रही हूँ… कृपया बोलिए',
+  speakingLabel: 'सहायक बोल रही है…',
+  processingLabel: 'एक पल…',
+  heardYou: 'आपने कहा',
+  tapRepeat: 'दोहराएँ',
+  emWhat: 'यह आपातकालीन सहायता है। कृपया बताइए क्या हुआ है। आप अभी बोल सकते हैं।',
+  emName: 'मरीज़ का नाम क्या है?',
+  emSent: 'धन्यवाद। आपातकालीन टीम को सूचित कर दिया गया है और वे आ रहे हैं। कृपया यहीं रुकिए।',
+  emDidNot: 'कृपया बताइए क्या हुआ है। आप अभी बोल सकते हैं।'
 };
 
 const overrides: Record<string, Partial<Copy>> = {

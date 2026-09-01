@@ -9,6 +9,209 @@ export const blobToBase64 = (blob: Blob): Promise<string> =>
     reader.readAsDataURL(blob);
   });
 
+export interface ListenResult {
+  base64: string;
+  mimeType: string;
+  spoke: boolean;
+}
+
+export interface ListenHandle {
+  result: Promise<ListenResult | null>;
+  stop: () => void;
+  cancel: () => void;
+}
+
+export interface ListenOptions {
+  onLevel?: (level: number) => void;
+  onSpeechStart?: () => void;
+  silenceMs?: number;
+  maxMs?: number;
+  startTimeoutMs?: number;
+  /** Voice must exceed (noiseFloor + this) to count as speech. Raise to ignore louder rooms. */
+  speechMargin?: number;
+  /** Absolute minimum level to ever treat as speech, regardless of noise floor. */
+  minSpeechLevel?: number;
+}
+
+/**
+ * Noise-aware push-to-nothing listener.
+ *
+ * It first measures the room's ambient level for ~400ms, then only treats sound
+ * as the patient speaking when it rises clearly ABOVE that floor and stays up for
+ * a few consecutive frames. A short cough or a passing voice that does not sustain
+ * is ignored. Recording ends after the patient goes quiet for `silenceMs`.
+ */
+export const listenForSpeech = (opts: ListenOptions = {}): ListenHandle => {
+  const {
+    onLevel,
+    onSpeechStart,
+    silenceMs = 1400,
+    maxMs = 22000,
+    startTimeoutMs = 12000,
+    speechMargin = 0.06,
+    minSpeechLevel = 0.08
+  } = opts;
+
+  const CALIBRATION_MS = 350;
+  const SUSTAIN_FRAMES = 2;
+
+  let stream: MediaStream | null = null;
+  let recorder: MediaRecorder | null = null;
+  let context: AudioContext | null = null;
+  let raf = 0;
+  const chunks: Blob[] = [];
+  let mimeType = 'audio/webm';
+
+  let started = false;
+  let speaking = false;
+  let cancelled = false;
+  let resolveResult: (value: ListenResult | null) => void = () => {};
+  let stopTimer: number | null = null;
+  let hardTimer: number | null = null;
+  let startTimer: number | null = null;
+
+  let noiseFloor = 0.04;
+  let calibrating = true;
+  let calibN = 0;
+  let calibSum = 0;
+  let calibStart = 0;
+  let aboveRun = 0;
+
+  const result = new Promise<ListenResult | null>((resolve) => {
+    resolveResult = resolve;
+  });
+
+  const cleanup = () => {
+    cancelAnimationFrame(raf);
+    if (stopTimer) clearTimeout(stopTimer);
+    if (hardTimer) clearTimeout(hardTimer);
+    if (startTimer) clearTimeout(startTimer);
+    stream?.getTracks().forEach((t) => t.stop());
+    context?.close().catch(() => undefined);
+    stream = null;
+    context = null;
+    recorder = null;
+  };
+
+  const finish = async (spoke: boolean) => {
+    if (!recorder) {
+      cleanup();
+      resolveResult(null);
+      return;
+    }
+    const rec = recorder;
+    recorder = null;
+    rec.onstop = async () => {
+      const blob = new Blob(chunks, { type: mimeType });
+      const base64 = await blobToBase64(blob);
+      cleanup();
+      // Send if the patient spoke, or if they tapped Done with enough audio captured.
+      if (cancelled || (!spoke && blob.size < 1400) || blob.size < 900) {
+        resolveResult(null);
+        return;
+      }
+      resolveResult({ base64, mimeType: mimeType.split(';')[0], spoke: true });
+    };
+    try {
+      rec.stop();
+    } catch {
+      cleanup();
+      resolveResult(null);
+    }
+  };
+
+  (async () => {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1
+        }
+      });
+      if (cancelled) { cleanup(); resolveResult(null); return; }
+
+      const preferred = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+      mimeType = preferred.find((t) => MediaRecorder.isTypeSupported(t)) || '';
+
+      recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.start(200);
+
+      context = new AudioContext();
+      const source = context.createMediaStreamSource(stream);
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.75;
+      source.connect(analyser);
+      // Focus on the speech band (~300Hz–3.4kHz) instead of the whole spectrum,
+      // so hums, fans and low rumble contribute little.
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const sampleRate = context.sampleRate;
+      const binHz = sampleRate / analyser.fftSize;
+      const loBin = Math.max(1, Math.floor(300 / binHz));
+      const hiBin = Math.min(data.length - 1, Math.ceil(3400 / binHz));
+
+      calibStart = performance.now();
+      hardTimer = window.setTimeout(() => finish(speaking), maxMs);
+      startTimer = window.setTimeout(() => { if (!started) finish(false); }, startTimeoutMs);
+
+      const tick = () => {
+        if (!context) return;
+        analyser.getByteFrequencyData(data);
+        let sum = 0;
+        for (let i = loBin; i <= hiBin; i++) sum += data[i];
+        const level = Math.min(1, sum / (hiBin - loBin + 1) / 80);
+        onLevel?.(started ? level : level * 0.6);
+
+        if (calibrating) {
+          calibSum += level;
+          calibN++;
+          if (performance.now() - calibStart >= CALIBRATION_MS) {
+            noiseFloor = calibSum / Math.max(1, calibN);
+            calibrating = false;
+          }
+          raf = requestAnimationFrame(tick);
+          return;
+        }
+
+        const threshold = Math.max(minSpeechLevel, noiseFloor + speechMargin);
+
+        if (level >= threshold) {
+          aboveRun++;
+          if (!started && aboveRun >= SUSTAIN_FRAMES) {
+            started = true;
+            speaking = true;
+            if (startTimer) { clearTimeout(startTimer); startTimer = null; }
+            onSpeechStart?.();
+          }
+          if (started && stopTimer) { clearTimeout(stopTimer); stopTimer = null; }
+        } else {
+          aboveRun = 0;
+          if (started && !stopTimer) {
+            stopTimer = window.setTimeout(() => finish(true), silenceMs);
+          }
+        }
+
+        raf = requestAnimationFrame(tick);
+      };
+      tick();
+    } catch {
+      cleanup();
+      resolveResult(null);
+    }
+  })();
+
+  return {
+    result,
+    // Manual "Done": force-send whatever was captured, even if the detector
+    // never tripped (covers quiet voices / a too-strict threshold).
+    stop: () => finish(true),
+    cancel: () => { cancelled = true; finish(false); }
+  };
+};
+
 export class Recorder {
   private recorder: MediaRecorder | null = null;
   private chunks: Blob[] = [];
@@ -139,6 +342,27 @@ export const playChunks = async (
   if (token === playToken) activeAudio = null;
 };
 
+/** Plays a pre-recorded prompt from a URL, honouring the same stop control. */
+export const playUrl = async (url: string): Promise<boolean> => {
+  stopSpeech();
+  const token = ++playToken;
+
+  return new Promise<boolean>((resolve) => {
+    const audio = new Audio(url);
+    activeAudio = audio;
+    let settled = false;
+    const done = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      if (token === playToken) activeAudio = null;
+      resolve(ok);
+    };
+    audio.onended = () => done(true);
+    audio.onerror = () => done(false);
+    audio.play().catch(() => done(false));
+  });
+};
+
 export const captureFrame = (video: HTMLVideoElement, maxWidth = 900): string | null => {
   if (!video.videoWidth) return null;
 
@@ -151,7 +375,29 @@ export const captureFrame = (video: HTMLVideoElement, maxWidth = 900): string | 
   if (!context) return null;
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  return canvas.toDataURL('image/jpeg', 0.9).split('base64,')[1];
+  return canvas.toDataURL('image/jpeg', 0.92).split('base64,')[1];
+};
+
+/**
+ * Waits until the webcam is actually producing frames (videoWidth > 0 and a
+ * few frames painted), then captures. Prevents sending an empty/black frame
+ * to face detection, which reads as "no face".
+ */
+export const captureWhenReady = async (
+  video: HTMLVideoElement,
+  maxWidth = 960,
+  timeoutMs = 4000
+): Promise<string | null> => {
+  const start = performance.now();
+  while (performance.now() - start < timeoutMs) {
+    if (video.videoWidth > 0 && video.readyState >= 2) {
+      // let a couple more frames render so auto-exposure settles
+      await new Promise((r) => setTimeout(r, 350));
+      return captureFrame(video, maxWidth);
+    }
+    await new Promise((r) => setTimeout(r, 120));
+  }
+  return video.videoWidth > 0 ? captureFrame(video, maxWidth) : null;
 };
 
 export const openCamera = async (
@@ -163,7 +409,17 @@ export const openCamera = async (
     audio: false
   });
   video.srcObject = stream;
-  await video.play().catch(() => undefined);
+
+  // Wait for the first real frame so a capture right after this isn't empty.
+  await new Promise<void>((resolve) => {
+    let settled = false;
+    const done = () => { if (!settled) { settled = true; resolve(); } };
+    video.onloadedmetadata = () => { video.play().catch(() => undefined); };
+    video.onloadeddata = done;
+    video.play().catch(() => undefined);
+    setTimeout(done, 2500);
+  });
+
   return stream;
 };
 

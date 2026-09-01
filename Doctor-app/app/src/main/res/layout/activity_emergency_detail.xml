@@ -1,340 +1,218 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/gray_50">
+    android:orientation="vertical"
+    android:background="@color/background">
 
-    <LinearLayout
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/triage_red"
+        app:titleTextColor="@color/white"
+        app:subtitleTextColor="@color/white" />
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/red_600"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"/>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
-        <!-- Patient Info -->
-        <com.google.android.material.card.MaterialCardView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:id="@+id/tvPatientName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Patient Name"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/gray_900"/>
-
-                <TextView
-                    android:id="@+id/tvAbhaId"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="ABHA: ---"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_600"/>
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/ink_200"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/tvTriage"
+                            style="@style/Text.Caption"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="12dp"
+                            android:paddingRight="12dp"
+                            android:paddingTop="6dp"
+                            android:paddingBottom="6dp"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:id="@+id/tvToken"
+                            style="@style/Text.Title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
 
                     <TextView
-                        android:id="@+id/tvAge"
-                        android:layout_width="0dp"
+                        android:id="@+id/tvComplaint"
+                        style="@style/Text.Display"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Age: --"
-                        android:textSize="14sp"
-                        android:textColor="@color/gray_700"/>
+                        android:layout_marginTop="12dp" />
 
                     <TextView
-                        android:id="@+id/tvGender"
-                        android:layout_width="0dp"
+                        android:id="@+id/tvPatient"
+                        style="@style/Text.Caption"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Gender: --"
-                        android:textSize="14sp"
-                        android:textColor="@color/gray_700"/>
-
-                    <TextView
-                        android:id="@+id/tvMobile"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Mobile: --"
-                        android:textSize="14sp"
-                        android:textColor="@color/gray_700"/>
-
+                        android:layout_marginTop="6dp" />
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Symptoms -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
+            <TextView
+                android:id="@+id/tvRedFlags"
+                style="@style/Text.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_panel_danger"
+                android:padding="14dp"
+                android:textColor="@color/danger"
+                android:textStyle="bold"
+                android:visibility="gone" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Symptoms"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/gray_900"/>
-
-                <TextView
-                    android:id="@+id/tvSymptoms"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="---"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_700"/>
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- AI Summary -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnListen"
+                style="@style/Widget.DoctorApp.Button.Outlined"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginTop="16dp"
+                android:text="@string/listen_summary" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="AI Summary"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/gray_900"/>
-
-                <TextView
-                    android:id="@+id/tvSummary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="---"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_700"/>
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Medical History -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
+            <TextView
+                style="@style/Text.SectionLabel"
+                android:id="@+id/lblSummary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginTop="20dp"
+                android:text="Handover" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Medical History"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/gray_900"/>
-
-                <TextView
-                    android:id="@+id/tvConditions"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Conditions: ---"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_700"/>
-
-                <TextView
-                    android:id="@+id/tvAllergies"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Allergies: ---"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_700"/>
-
-                <TextView
-                    android:id="@+id/tvMedications"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Medications: ---"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_700"/>
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Queue Status -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
+            <TextView
+                android:id="@+id/tvSummary"
+                style="@style/Text.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginTop="6dp" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Queue Status"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/gray_900"/>
 
-                <TextView
-                    android:id="@+id/tvQueuePosition"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Position: --"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_700"/>
-
-                <TextView
-                    android:id="@+id/tvUrgency"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Urgency: --"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_700"/>
-
-                <TextView
-                    android:id="@+id/tvStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Status: --"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_700"/>
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Conversation -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
+            <TextView
+                style="@style/Text.SectionLabel"
+                android:id="@+id/lblKeyPoints"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginTop="20dp"
+                android:text="Key points" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="AI Conversation"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/gray_900"/>
+            <TextView
+                android:id="@+id/tvKeyPoints"
+                style="@style/Text.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp" />
 
-                <TextView
-                    android:id="@+id/tvConversation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="---"
-                    android:textSize="13sp"
-                    android:textColor="@color/gray_700"
-                    android:lineSpacingExtra="4dp"/>
 
-            </LinearLayout>
+            <TextView
+                style="@style/Text.SectionLabel"
+                android:id="@+id/lblAnswers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Triage answers" />
 
-        </com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:id="@+id/tvAnswers"
+                style="@style/Text.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp" />
 
-        <!-- Buttons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="horizontal"
-            android:gravity="center">
 
-            <Button
-                android:id="@+id/btnAccept"
-                android:layout_width="0dp"
-                android:layout_height="56dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Accept"
-                android:textSize="14sp"
-                android:backgroundTint="@color/blue_600"
-                app:cornerRadius="8dp"/>
+            <TextView
+                style="@style/Text.SectionLabel"
+                android:id="@+id/lblHistory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Known history" />
 
-            <Button
-                android:id="@+id/btnComplete"
-                android:layout_width="0dp"
-                android:layout_height="56dp"
-                android:layout_weight="1"
-                android:text="Complete"
-                android:textSize="14sp"
-                android:backgroundTint="@color/green_600"
-                app:cornerRadius="8dp"/>
+            <TextView
+                android:id="@+id/tvHistory"
+                style="@style/Text.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp" />
 
+
+            <TextView
+                style="@style/Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/bg_panel_muted"
+                android:padding="12dp"
+                android:text="@string/ai_disclaimer" />
         </LinearLayout>
+    </ScrollView>
 
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/surface"
+        android:padding="12dp"
+        android:elevation="8dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAccept"
+            style="@style/Widget.DoctorApp.Button"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="24dp"
-            android:visibility="gone"/>
+            android:layout_weight="1"
+            android:text="@string/accept_case"
+            app:backgroundTint="@color/brand_600" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnComplete"
+            style="@style/Widget.DoctorApp.Button.Outlined"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:text="@string/complete_case" />
     </LinearLayout>
 
-</ScrollView>
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:indeterminateTint="@color/brand_600"
+        android:visibility="gone" />
+</LinearLayout>

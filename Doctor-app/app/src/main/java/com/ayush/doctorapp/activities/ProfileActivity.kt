@@ -4,52 +4,50 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.ayush.doctorapp.databinding.ActivityProfileBinding
-import com.ayush.doctorapp.Utils.TokenManager
+import com.ayush.doctorapp.utils.Formatting
+import com.ayush.doctorapp.utils.TokenManager
 
 class ProfileActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityProfileBinding
-    private val tokenManager = TokenManager(this)
+    private val tokenManager by lazy { TokenManager(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupToolbar()
-        loadDoctorData()
-        setupListeners()
-    }
-
-    private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.title = "Profile"
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-    }
+        binding.toolbar.setNavigationOnClickListener { finish() }
 
-    private fun loadDoctorData() {
         val doctor = tokenManager.getDoctor()
-        if (doctor != null) {
-            binding.tvDoctorName.text = "${doctor.name.firstName} ${doctor.name.lastName}"
-            binding.tvSpecialization.text = doctor.specialization
-            binding.tvEmail.text = doctor.contact.email
-            binding.tvMobile.text = doctor.contact.mobile
-            binding.tvHospital.text = "Hospital: ${doctor.hospital.hospitalName}"
-            binding.tvDepartment.text = "Department: ${doctor.hospital.departmentName}"
-            binding.tvRegistration.text = "Reg No: ${doctor.registrationNumber}"
-        }
-    }
+        val fullName = doctor?.name?.display() ?: "Doctor"
 
-    private fun setupListeners() {
+        binding.tvAvatar.text = Formatting.initials(fullName)
+        binding.tvName.text = "Dr. " + fullName
+        binding.tvSpecialization.text = doctor?.specialization ?: "General Medicine"
+
+        binding.tvHospital.text = listOfNotNull(
+            doctor?.hospital?.hospitalName,
+            doctor?.hospital?.departmentName
+        ).joinToString("\n").ifBlank { "Not recorded" }
+
+        binding.tvContact.text = listOfNotNull(
+            doctor?.email
+        ).joinToString("\n").ifBlank { "Not recorded" }
+
+        binding.tvAccount.text = listOfNotNull(
+            doctor?.username?.let { "Username: " + it },
+            doctor?.role?.let { "Role: " + it },
+            doctor?.doctorId?.let { "ID: " + it }
+        ).joinToString("\n").ifBlank { "Not recorded" }
+
         binding.btnLogout.setOnClickListener {
-            tokenManager.clearAll()
+            tokenManager.clear()
             startActivity(Intent(this, LoginActivity::class.java))
-            finish()
+            finishAffinity()
         }
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return true
     }
 }

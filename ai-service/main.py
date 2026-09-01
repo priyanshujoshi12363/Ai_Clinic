@@ -98,7 +98,9 @@ async def extract_face_embedding(request: FaceExtractRequest):
             }
         
         img = decode_base64_image(request.image)
+        print(f"[EXTRACT DIAG] image shape={getattr(img,'shape',None)} mean_brightness={float(img.mean()) if img is not None else 'NA':.1f}")
         faces = face_app.get(img)
+        print(f"[EXTRACT DIAG] faces_detected={len(faces)}" + (f" det_score={float(faces[0].det_score):.3f}" if faces else ""))
         
         if not faces:
             return {
@@ -208,7 +210,9 @@ async def verify_face_with_embedding(request: FaceVerifyRequest):
             }
         
         img = decode_base64_image(request.image)
+        print(f"[EXTRACT DIAG] image shape={getattr(img,'shape',None)} mean_brightness={float(img.mean()) if img is not None else 'NA':.1f}")
         faces = face_app.get(img)
+        print(f"[EXTRACT DIAG] faces_detected={len(faces)}" + (f" det_score={float(faces[0].det_score):.3f}" if faces else ""))
         
         if not faces:
             return {

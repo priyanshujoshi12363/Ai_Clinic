@@ -3,6 +3,10 @@ import {
   startSession,
   identifyByFace,
   identifyByAbha,
+  verifyAadhaarForIntake,
+  registerByAadhaar,
+  transcribeField,
+  voiceIntent,
   giveConsent,
   selectMode,
   beginInterview,
@@ -27,6 +31,10 @@ router.get('/queue', doctorQueue);
 router.get('/:sessionId', getSession);
 router.post('/:sessionId/identify/face', identifyByFace);
 router.post('/:sessionId/identify/abha', identifyByAbha);
+router.post('/:sessionId/identify/aadhaar/verify', verifyAadhaarForIntake);
+router.post('/:sessionId/identify/aadhaar/register', registerByAadhaar);
+router.post('/:sessionId/transcribe', transcribeField);
+router.post('/:sessionId/intent', voiceIntent);
 router.post('/:sessionId/consent', giveConsent);
 router.post('/:sessionId/mode', selectMode);
 router.post('/:sessionId/interview/begin', beginInterview);

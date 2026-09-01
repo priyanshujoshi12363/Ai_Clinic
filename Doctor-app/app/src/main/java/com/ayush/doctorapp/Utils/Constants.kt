@@ -1,6 +1,8 @@
-package com.ayush.doctorapp.Utils
+package com.ayush.doctorapp.utils
 
 object Constants {
     const val KEY_TOKEN = "auth_token"
-    const val KEY_DOCTOR_DATA = "doctor_data"
+    const val KEY_DOCTOR = "doctor_profile"
+    const val EXTRA_SESSION_ID = "sessionId"
+    const val EXTRA_EMERGENCY_TOKEN = "emergencyToken"
 }

@@ -3,7 +3,8 @@ import axios from 'axios';
 const SARVAM_BASE = 'https://api.sarvam.ai';
 const STT_MODEL = process.env.SARVAM_STT_MODEL || 'saarika:v2.5';
 const TTS_MODEL = process.env.SARVAM_TTS_MODEL || 'bulbul:v3';
-const TTS_SPEAKER = process.env.SARVAM_TTS_SPEAKER || 'shubh';
+const TTS_SPEAKER = process.env.SARVAM_TTS_SPEAKER || 'shreya';
+const TTS_PACE = Number(process.env.SARVAM_TTS_PACE || 1.15);
 
 const TTS_CHUNK_CHARS = 450;
 
@@ -113,7 +114,7 @@ const splitForSpeech = (text) => {
   return chunks;
 };
 
-export const textToSpeech = async (text, language = 'hi-IN') => {
+export const textToSpeech = async (text, language = 'hi-IN', options = {}) => {
   if (!apiKey()) {
     return { success: false, message: 'SARVAM_API_KEY is not configured' };
   }
@@ -124,6 +125,8 @@ export const textToSpeech = async (text, language = 'hi-IN') => {
   }
 
   const targetLanguage = normalizeLanguage(language);
+  const speaker = options.speaker || TTS_SPEAKER;
+  const pace = Number(options.pace || TTS_PACE);
 
   try {
     const audios = [];
@@ -134,8 +137,8 @@ export const textToSpeech = async (text, language = 'hi-IN') => {
         {
           inputs: [chunk],
           target_language_code: targetLanguage,
-          speaker: TTS_SPEAKER,
-          pace: 1.0,
+          speaker,
+          pace,
           speech_sample_rate: 22050,
           model: TTS_MODEL
         },

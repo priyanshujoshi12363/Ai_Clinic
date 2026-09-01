@@ -33,6 +33,7 @@ const emergencySchema = new mongoose.Schema({
   targetMinutes: { type: Number },
   urgency: { type: String, enum: ['EMERGENCY', 'URGENT', 'ROUTINE'], default: 'URGENT' },
   suspectedCategory: { type: String },
+  routedSpecialization: { type: String, default: 'General Medicine' },
   redFlags: [String],
   triageHistory: [{
     from: String,

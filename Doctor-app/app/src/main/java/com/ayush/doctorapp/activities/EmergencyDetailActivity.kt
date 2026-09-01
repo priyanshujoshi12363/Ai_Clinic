@@ -1,114 +1,193 @@
 package com.ayush.doctorapp.activities
 
 import android.os.Bundle
-import android.widget.Toast
+import android.view.View
+import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import com.ayush.doctorapp.R
+import com.ayush.doctorapp.adapters.TriageStyle
 import com.ayush.doctorapp.databinding.ActivityEmergencyDetailBinding
+import com.ayush.doctorapp.models.EmergencyCase
 import com.ayush.doctorapp.network.ApiResult
+import com.ayush.doctorapp.utils.BriefingPlayer
+import com.ayush.doctorapp.utils.Constants
 import com.ayush.doctorapp.utils.TokenManager
 import com.ayush.doctorapp.viewmodels.EmergencyViewModel
+import com.google.android.material.snackbar.Snackbar
 
 class EmergencyDetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityEmergencyDetailBinding
-    private val emergencyViewModel: EmergencyViewModel by viewModels()
-    private val tokenManager = TokenManager(this)
-    private var emergencyId: String = ""
+    private val viewModel: EmergencyViewModel by viewModels()
+    private val player = BriefingPlayer()
+    private val tokenManager by lazy { TokenManager(this) }
+    private var emergencyToken: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityEmergencyDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        emergencyId = intent.getStringExtra("emergencyId") ?: ""
+        emergencyToken = intent.getStringExtra(Constants.EXTRA_EMERGENCY_TOKEN).orEmpty()
 
-        setupToolbar()
-        setupObservers()
-        loadEmergencyDetail()
-
-        binding.btnAccept.setOnClickListener {
-            updateEmergencyStatus("IN_PROGRESS")
-        }
-
-        binding.btnComplete.setOnClickListener {
-            updateEmergencyStatus("COMPLETED")
-        }
-    }
-
-    private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
-        supportActionBar?.title = "Emergency Case"
+        supportActionBar?.title = "Emergency case"
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        binding.toolbar.setNavigationOnClickListener { finish() }
+
+        observe()
+
+        if (emergencyToken.isBlank()) {
+            Snackbar.make(binding.root, "No emergency token provided", Snackbar.LENGTH_LONG).show()
+        } else {
+            viewModel.loadCase(emergencyToken)
+        }
+
+        binding.btnListen.setOnClickListener {
+            if (player.isPlaying()) {
+                player.stop()
+                binding.btnListen.text = getString(R.string.listen_summary)
+            } else {
+                binding.btnListen.isEnabled = false
+                viewModel.loadBriefing(emergencyToken)
+            }
+        }
+
+        binding.btnAccept.setOnClickListener { updateStatus("IN_PROGRESS") }
+        binding.btnComplete.setOnClickListener { updateStatus("COMPLETED") }
     }
 
-    private fun setupObservers() {
-        emergencyViewModel.emergencyDetail.observe(this) { result ->
+    private fun updateStatus(status: String) {
+        val doctorName = tokenManager.getDoctor()?.name?.display()
+        viewModel.updateStatus(emergencyToken, status, doctorName)
+    }
+
+    private fun observe() {
+        viewModel.detail.observe(this) { result ->
             when (result) {
+                is ApiResult.Loading -> binding.progressBar.visibility = View.VISIBLE
                 is ApiResult.Success -> {
                     binding.progressBar.visibility = View.GONE
-                    result.data?.let { detail ->
-                        displayEmergencyDetail(detail)
-                    }
+                    render(result.data)
                 }
                 is ApiResult.Error -> {
                     binding.progressBar.visibility = View.GONE
-                    Toast.makeText(this, result.message, Toast.LENGTH_LONG).show()
+                    Snackbar.make(binding.root, result.message, Snackbar.LENGTH_LONG).show()
                 }
-                is ApiResult.Loading -> {
-                    binding.progressBar.visibility = View.VISIBLE
+            }
+        }
+
+        viewModel.briefing.observe(this) { result ->
+            when (result) {
+                is ApiResult.Loading -> Unit
+                is ApiResult.Success -> {
+                    binding.btnListen.isEnabled = true
+                    val chunks = result.data.audios.orEmpty()
+                    if (chunks.isEmpty()) {
+                        Snackbar.make(binding.root, "No audio returned", Snackbar.LENGTH_SHORT).show()
+                    } else {
+                        binding.btnListen.text = getString(R.string.stop_audio)
+                        player.play(cacheDir, chunks, result.data.format) {
+                            runOnUiThread { binding.btnListen.text = getString(R.string.listen_summary) }
+                        }
+                    }
                 }
+                is ApiResult.Error -> {
+                    binding.btnListen.isEnabled = true
+                    Snackbar.make(binding.root, result.message, Snackbar.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        viewModel.statusUpdated.observe(this) { result ->
+            when (result) {
+                is ApiResult.Loading -> Unit
+                is ApiResult.Success -> {
+                    Snackbar.make(binding.root, "Status updated", Snackbar.LENGTH_SHORT).show()
+                    finish()
+                }
+                is ApiResult.Error ->
+                    Snackbar.make(binding.root, result.message, Snackbar.LENGTH_LONG).show()
             }
         }
     }
 
-    private fun loadEmergencyDetail() {
-        val token = tokenManager.getToken()
-        if (token != null && emergencyId.isNotEmpty()) {
-            emergencyViewModel.getEmergencyDetail(token, emergencyId)
+    private fun setSection(label: View, body: TextView, value: String?) {
+        val text = value?.trim().orEmpty()
+        if (text.isEmpty()) {
+            label.visibility = View.GONE
+            body.visibility = View.GONE
+        } else {
+            label.visibility = View.VISIBLE
+            body.visibility = View.VISIBLE
+            body.text = text
         }
     }
 
-    private fun displayEmergencyDetail(detail: com.ayush.doctorapp.models.EmergencyDetail) {
-        binding.tvPatientName.text = detail.patient.name
-        binding.tvAbhaId.text = "ABHA: ${detail.patient.abhaId}"
-        binding.tvAge.text = "Age: ${detail.patient.age} years"
-        binding.tvGender.text = "Gender: ${detail.patient.gender}"
-        binding.tvMobile.text = "Mobile: ${detail.patient.mobile}"
+    private fun render(case: EmergencyCase) {
+        val triageColor = ContextCompat.getColor(this, TriageStyle.barColor(case.triageLevel))
 
-        binding.tvSymptoms.text = detail.symptoms.joinToString(", ")
-        binding.tvSummary.text = detail.aiSummary
+        binding.toolbar.setBackgroundColor(triageColor)
+        window.statusBarColor = triageColor
 
-        detail.medicalHistory?.let { history ->
-            binding.tvConditions.text = "Conditions: ${history.conditions?.joinToString(", ") ?: "None"}"
-            binding.tvAllergies.text = "Allergies: ${history.allergies?.joinToString(", ") ?: "None"}"
-            binding.tvMedications.text = "Medications: ${history.medications?.joinToString(", ") ?: "None"}"
+        binding.tvTriage.text = listOfNotNull(
+            case.triageLevel,
+            case.triageLabel,
+            case.targetMinutes?.let { "see within ${it} min" }
+        ).joinToString(" · ")
+        binding.tvTriage.setBackgroundResource(TriageStyle.chipBackground(case.triageLevel))
+        binding.tvTriage.setTextColor(triageColor)
+
+        binding.tvToken.text = case.tokenNumber.orEmpty()
+        binding.tvComplaint.text = case.chiefComplaint?.takeIf { it.isNotBlank() }
+            ?: case.symptoms.orEmpty()
+
+        val identified = case.identificationStatus == "IDENTIFIED"
+        binding.tvPatient.text = listOfNotNull(
+            if (identified) case.patientName else "Not yet identified",
+            case.abhaId,
+            case.suspectedCategory,
+            case.waitingMinutes?.let { "waiting ${it} min" },
+            case.status
+        ).joinToString(" · ")
+
+        val flags = case.redFlags.orEmpty()
+        if (flags.isEmpty()) {
+            binding.tvRedFlags.visibility = View.GONE
+        } else {
+            binding.tvRedFlags.visibility = View.VISIBLE
+            binding.tvRedFlags.text = "RED FLAGS\n" + flags.joinToString("\n") { "• $it" }
         }
 
-        binding.tvQueuePosition.text = "Queue Position: #${detail.queueStatus.queuePosition}"
-        binding.tvUrgency.text = "Urgency: ${detail.queueStatus.urgency}"
-        binding.tvStatus.text = "Status: ${detail.queueStatus.status}"
+        setSection(binding.lblSummary, binding.tvSummary, case.aiSummary)
+        setSection(binding.lblKeyPoints, binding.tvKeyPoints,
+            case.keyPoints?.joinToString("\n") { "• $it" })
 
-        // Show conversation
-        detail.conversation?.let { conv ->
-            val conversationText = conv.joinToString("\n") { 
-                "Q: ${it.question}\nA: ${it.answer}" 
-            }
-            binding.tvConversation.text = conversationText
-        }
+        setSection(binding.lblAnswers, binding.tvAnswers,
+            case.answers?.takeIf { it.isNotEmpty() }?.joinToString("\n\n") { answer ->
+                "${answer.question.orEmpty()}\n→ ${answer.answer.orEmpty()}"
+            })
+
+        val history = case.knownHistory
+        setSection(binding.lblHistory, binding.tvHistory,
+            if (!identified || history == null) {
+                null
+            } else {
+                listOfNotNull(
+                    history.conditions?.takeIf { it.isNotEmpty() }?.let { "Conditions: ${it.joinToString(", ")}" },
+                    history.allergies?.takeIf { it.isNotEmpty() }?.let { "Allergies: ${it.joinToString(", ")}" },
+                    history.medicines?.takeIf { it.isNotEmpty() }?.let { "Medicines: ${it.joinToString(", ")}" }
+                ).joinToString("\n").takeIf { it.isNotBlank() }
+            })
+
+        binding.btnAccept.isEnabled = case.status != "COMPLETED"
+        binding.btnComplete.isEnabled = case.status != "COMPLETED"
     }
 
-    private fun updateEmergencyStatus(status: String) {
-        val token = tokenManager.getToken()
-        if (token != null) {
-            emergencyViewModel.updateEmergencyStatus(token, emergencyId, status)
-            Toast.makeText(this, "Status updated to $status", Toast.LENGTH_SHORT).show()
-            finish()
-        }
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return true
+    override fun onStop() {
+        super.onStop()
+        player.stop()
     }
 }

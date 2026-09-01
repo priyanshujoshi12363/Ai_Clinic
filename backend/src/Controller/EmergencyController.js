@@ -8,6 +8,22 @@ import { findPatientByFace } from '../services/faceSearchService.js';
 const ok = (res, data, status = 200) => res.status(status).json({ success: true, data });
 const fail = (res, message, status = 400) => res.status(status).json({ success: false, message });
 
+// Specialization-based routing. Every emergency is tagged with the specialty it
+// would ideally go to; with a single doctor logged in, the queue still shows them
+// all, but the routing metadata is preserved for a multi-doctor deployment.
+const SPECIALITY_BY_CATEGORY = {
+  CARDIAC: 'Cardiology',
+  TRAUMA: 'Emergency & Trauma',
+  RESPIRATORY: 'Pulmonology',
+  NEUROLOGICAL: 'Neurology',
+  OBSTETRIC: 'Obstetrics & Gynaecology',
+  POISONING: 'Emergency & Toxicology',
+  BURNS: 'Burns & Plastic Surgery',
+  PAEDIATRIC: 'Paediatrics',
+  OTHER: 'General Medicine'
+};
+const routeFor = (category) => SPECIALITY_BY_CATEGORY[category] || 'General Medicine';
+
 const speak = async (text, language) => {
   if (!text) return null;
   const result = await textToSpeech(text, language);
@@ -90,6 +106,7 @@ export const emergencyIntake = async (req, res) => {
       targetMinutes: assessment.targetMinutes,
       urgency: assessment.urgency,
       suspectedCategory: assessment.suspectedCategory,
+      routedSpecialization: routeFor(assessment.suspectedCategory),
       redFlags: assessment.redFlags,
       essentialQuestions: assessment.essentialQuestions,
       aiSummary: assessment.aiSummary,
@@ -116,6 +133,7 @@ export const emergencyIntake = async (req, res) => {
       targetMinutes: assessment.targetMinutes,
       urgency: assessment.urgency,
       suspectedCategory: assessment.suspectedCategory,
+      routedSpecialization: routeFor(assessment.suspectedCategory),
       redFlags: assessment.redFlags,
       aiSummary: assessment.aiSummary,
       keyPoints: assessment.keyPoints,
@@ -318,9 +336,8 @@ export const emergencyBriefing = async (req, res) => {
       || `${emergency.triageLabel} priority, token ${emergency.tokenNumber}. ${emergency.aiSummary}${historyLine}`;
 
     const audio = await speak(text, language);
-    if (!audio) return fail(res, 'Text to speech failed', 502);
 
-    return ok(res, { text, ...audio });
+    return ok(res, { text, audios: audio?.audios || [], format: audio?.format || 'wav', language });
   } catch (error) {
     return fail(res, error.message, 500);
   }
@@ -369,6 +386,7 @@ export const getEmergency = async (req, res) => {
       targetMinutes: record.targetMinutes,
       urgency: record.urgency,
       suspectedCategory: record.suspectedCategory,
+      routedSpecialization: record.routedSpecialization,
       redFlags: record.redFlags,
       aiSummary: record.aiSummary,
       keyPoints: record.keyPoints,

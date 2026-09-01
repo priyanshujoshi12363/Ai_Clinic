@@ -1,21 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
+
+    <color name="brand_900">#0B2E33</color>
+    <color name="brand_800">#0E3A40</color>
+    <color name="brand_700">#12474F</color>
+    <color name="brand_600">#155E63</color>
+    <color name="brand_500">#1B7A80</color>
+    <color name="brand_300">#7FB8BC</color>
+    <color name="brand_100">#DCEEF0</color>
+    <color name="brand_50">#F0F7F8</color>
+
+    <color name="ayush_700">#8A4009</color>
+    <color name="ayush_600">#B45309</color>
+    <color name="ayush_100">#FDE8CF</color>
+    <color name="ayush_50">#FEF6EC</color>
+
+    <color name="triage_red">#C62828</color>
+    <color name="triage_red_bg">#FDECEC</color>
+    <color name="triage_orange">#E65100</color>
+    <color name="triage_orange_bg">#FFF1E5</color>
+    <color name="triage_yellow">#A87900</color>
+    <color name="triage_yellow_bg">#FFF8E1</color>
+    <color name="triage_green">#2E7D32</color>
+    <color name="triage_green_bg">#EAF5EB</color>
+
+    <color name="ink_900">#0F172A</color>
+    <color name="ink_700">#334155</color>
+    <color name="ink_500">#64748B</color>
+    <color name="ink_400">#94A3B8</color>
+    <color name="ink_300">#CBD5E1</color>
+    <color name="ink_200">#E2E8F0</color>
+    <color name="ink_100">#EEF2F5</color>
+    <color name="ink_50">#F6F8F9</color>
+
+    <color name="surface">#FFFFFF</color>
+    <color name="background">#F6F8F9</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="primary">#0EA5E9</color>
-    <color name="primary_dark">#0284C7</color>
-    <color name="gray_50">#F9FAFB</color>
-    <color name="gray_100">#F3F4F6</color>
-    <color name="gray_200">#E5E7EB</color>
-    <color name="gray_300">#D1D5DB</color>
-    <color name="gray_600">#6B7280</color>
-    <color name="gray_900">#111827</color>
-    <color name="red_500">#EF4444</color>
-    <color name="yellow_500">#F59E0B</color>
-    <color name="green_500">#22C55E</color>
+    <color name="black">#FF000000</color>
+
+    <color name="danger">#C62828</color>
+    <color name="danger_bg">#FDECEC</color>
+    <color name="success">#2E7D32</color>
+    <color name="success_bg">#EAF5EB</color>
+
 </resources>

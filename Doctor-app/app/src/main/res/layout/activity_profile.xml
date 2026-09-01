@@ -1,115 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/gray_50"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:background="@color/background">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@drawable/bg_header_gradient"
+        app:titleTextColor="@color/white" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:background="@drawable/bg_header_gradient"
+        android:gravity="center"
+        android:paddingTop="8dp"
+        android:paddingBottom="32dp">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/primary"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"/>
+        <TextView
+            android:id="@+id/tvAvatar"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:background="@drawable/bg_avatar"
+            android:gravity="center"
+            android:textColor="@color/brand_700"
+            android:textSize="30sp"
+            android:textStyle="bold" />
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            android:layout_marginTop="14dp"
+            android:textColor="@color/white"
+            android:textSize="21sp"
+            android:textStyle="bold" />
 
-            <LinearLayout
+        <TextView
+            android:id="@+id/tvSpecialization"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/brand_100"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+            <TextView
+                style="@style/Text.SectionLabel"
+                android:id="@+id/lblHospital"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="24dp"
-                android:gravity="center">
+                android:layout_marginTop="20dp"
+                android:text="Hospital" />
 
-                <TextView
-                    android:id="@+id/tvDoctorName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Doctor Name"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/gray_900"/>
+            <TextView
+                android:id="@+id/tvHospital"
+                style="@style/Text.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp" />
 
-                <TextView
-                    android:id="@+id/tvSpecialization"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Specialization"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_600"/>
 
-                <TextView
-                    android:id="@+id/tvEmail"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="email@example.com"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_600"
-                    android:layout_marginTop="4dp"/>
+            <TextView
+                style="@style/Text.SectionLabel"
+                android:id="@+id/lblContact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Contact" />
 
-                <TextView
-                    android:id="@+id/tvMobile"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="+91 9876543210"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_600"/>
+            <TextView
+                android:id="@+id/tvContact"
+                style="@style/Text.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp" />
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/gray_200"
-                    android:layout_marginVertical="16dp"/>
 
-                <TextView
-                    android:id="@+id/tvHospital"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Hospital Name"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_600"/>
+            <TextView
+                style="@style/Text.SectionLabel"
+                android:id="@+id/lblAccount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Account" />
 
-                <TextView
-                    android:id="@+id/tvDepartment"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Department"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_600"/>
+            <TextView
+                android:id="@+id/tvAccount"
+                style="@style/Text.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp" />
 
-                <TextView
-                    android:id="@+id/tvRegistration"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Reg: ---"
-                    android:textSize="14sp"
-                    android:textColor="@color/gray_600"/>
 
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
+            style="@style/Widget.DoctorApp.Button.Outlined"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="24dp"
-            android:text="Logout"
-            android:textSize="16sp"
-            android:textColor="@android:color/white"
-            android:background="@color/red_500"
-            app:cornerRadius="8dp"/>
-
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="@string/logout"
+            android:textColor="@color/danger"
+            app:strokeColor="@color/danger" />
     </LinearLayout>
-</ScrollView>
+</LinearLayout>

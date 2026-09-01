@@ -104,6 +104,7 @@ export interface EmergencyIntake {
   targetMinutes: number;
   urgency: 'EMERGENCY' | 'URGENT' | 'ROUTINE';
   suspectedCategory: string;
+  routedSpecialization?: string;
   redFlags: string[];
   aiSummary: string;
   keyPoints: string[];
@@ -182,8 +183,42 @@ export const api = {
       { faceImage }
     ),
 
-  identifyByAbha: (sessionId: string, abhaId: string) =>
-    post<{ found: boolean; patient: KnownPatient }>(`/intake/${sessionId}/identify/abha`, { abhaId }),
+  identifyByAbha: (sessionId: string, abhaId: string, faceImage?: string) =>
+    post<{ found: boolean; faceLinked?: boolean; reason?: string; patient?: KnownPatient }>(
+      `/intake/${sessionId}/identify/abha`,
+      { abhaId, ...(faceImage ? { faceImage } : {}) }
+    ),
+
+  verifyAadhaar: (sessionId: string, aadhaarNumber: string) =>
+    post<{
+      found: boolean;
+      reason?: string;
+      name?: string;
+      dateOfBirth?: string;
+      gender?: string;
+      alreadyRegistered?: boolean;
+      abhaId?: string | null;
+      otp?: string | null;
+      mobile?: string | null;
+    }>(`/intake/${sessionId}/identify/aadhaar/verify`, { aadhaarNumber }),
+
+  registerByAadhaar: (sessionId: string, aadhaarNumber: string, otp: string, faceImage: string) =>
+    post<{ registered: boolean; alreadyRegistered?: boolean; newAbhaId?: string; patient?: KnownPatient }>(
+      `/intake/${sessionId}/identify/aadhaar/register`,
+      { aadhaarNumber, otp, faceImage }
+    ),
+
+  intent: (sessionId: string, payload: { audio?: string; mimeType?: string; text?: string; task: 'yesno' | 'mode' | 'haveAbha' | 'ready' }) =>
+    post<{ transcript?: string; intent?: string; language?: string; heardNothing?: boolean }>(
+      `/intake/${sessionId}/intent`,
+      payload
+    ),
+
+  transcribeField: (sessionId: string, payload: { audio: string; mimeType?: string; field: 'digits' | 'aadhaar' | 'text'; expected?: number }) =>
+    post<{ transcript?: string; digits?: string; language?: string; heardNothing?: boolean }>(
+      `/intake/${sessionId}/transcribe`,
+      payload
+    ),
 
   consent: (sessionId: string, scope: { caseTaking: boolean; previousRecords: boolean; shareWithDoctor: boolean }) =>
     post<{ consentGiven: boolean }>(`/intake/${sessionId}/consent`, scope),
