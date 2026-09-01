@@ -256,7 +256,7 @@ export const identifyEmergencyPatient = async (req, res) => {
     let confidence = null;
 
     if (!resolvedAbha && faceImage) {
-      const match = await findPatientByFace(faceImage, 0.75);
+      const match = await findPatientByFace(faceImage);
       if (match.success && match.found) {
         resolvedAbha = match.data.abhaId;
         resolvedMethod = 'FACE';

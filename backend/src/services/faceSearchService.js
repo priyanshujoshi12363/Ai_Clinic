@@ -1,7 +1,12 @@
 import Patient from '../Models/abha.model.js';
 import { extractFaceEmbedding } from './faceService.js';
 
-export const findPatientByFace = async (faceImage, threshold = 0.75) => {
+// buffalo_l / ArcFace cosine similarity for the SAME person is typically 0.45–0.7,
+// and for different people < 0.3. A 0.75 cut-off rejected genuine matches. 0.5 is
+// the standard operating point; tune via FACE_MATCH_THRESHOLD.
+export const FACE_THRESHOLD = Number(process.env.FACE_MATCH_THRESHOLD || 0.5);
+
+export const findPatientByFace = async (faceImage, threshold = FACE_THRESHOLD) => {
   try {
     if (!faceImage) {
       return { 
@@ -49,6 +54,7 @@ export const findPatientByFace = async (faceImage, threshold = 0.75) => {
 
     let bestMatch = null;
     let bestScore = 0;
+    let secondScore = 0;
 
     for (const patient of allPatients) {
       if (!patient.faceData || !patient.faceData.faceEmbedding) {
@@ -56,14 +62,19 @@ export const findPatientByFace = async (faceImage, threshold = 0.75) => {
       }
 
       const storedEmbedding = patient.faceData.faceEmbedding;
-      
+
       const similarity = calculateCosineSimilarity(newEmbedding, storedEmbedding);
-      
+
       if (similarity > bestScore) {
+        secondScore = bestScore;
         bestScore = similarity;
         bestMatch = patient;
+      } else if (similarity > secondScore) {
+        secondScore = similarity;
       }
     }
+
+    console.log(`[face] best=${bestScore.toFixed(3)} (${bestMatch?.name || '-'}) second=${secondScore.toFixed(3)} threshold=${threshold} quality=${(embeddingResult.quality ?? 'NA')}`);
 
     if (bestMatch && bestScore >= threshold) {
       if (bestMatch.faceData && bestMatch.faceData.recognition) {

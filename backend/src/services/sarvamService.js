@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { offlineSTT } from './offlineAI.js';
 
 const SARVAM_BASE = 'https://api.sarvam.ai';
 const STT_MODEL = process.env.SARVAM_STT_MODEL || 'saarika:v2.5';
@@ -38,11 +39,23 @@ const stripDataUrl = (value) =>
   value && value.includes('base64,') ? value.split('base64,')[1] : value;
 
 export const speechToText = async (audioBase64, { languageHint = 'unknown', mimeType = 'audio/wav' } = {}) => {
-  if (!apiKey()) {
-    return { success: false, message: 'SARVAM_API_KEY is not configured' };
-  }
   if (!audioBase64) {
     return { success: false, message: 'Audio is required' };
+  }
+
+  // Offline fallback (Whisper) — used when Sarvam is unreachable or unconfigured.
+  const offlineFallback = async (reason) => {
+    try {
+      const result = await offlineSTT(audioBase64, { languageHint });
+      console.warn(`[hybrid] STT online failed (${reason}); used offline Whisper.`);
+      return result;
+    } catch (offlineError) {
+      return { success: false, message: `Sarvam failed (${reason}); offline STT also failed: ${offlineError.message}` };
+    }
+  };
+
+  if (!apiKey()) {
+    return offlineFallback('SARVAM_API_KEY not configured');
   }
 
   try {
@@ -75,12 +88,10 @@ export const speechToText = async (audioBase64, { languageHint = 'unknown', mime
       requestId: response.data?.request_id || null
     };
   } catch (error) {
-    return {
-      success: false,
-      message: error.response?.data
-        ? JSON.stringify(error.response.data).slice(0, 300)
-        : error.message
-    };
+    const reason = error.response?.data
+      ? JSON.stringify(error.response.data).slice(0, 300)
+      : error.message;
+    return offlineFallback(reason);
   }
 };
 

@@ -11,7 +11,7 @@ export const searchPatientByFace = async (req, res) => {
       });
     }
 
-    const result = await findPatientByFace(faceImage, threshold || 0.75);
+    const result = await findPatientByFace(faceImage, threshold || undefined);
     
     if (!result.success) {
       return res.status(400).json(result);

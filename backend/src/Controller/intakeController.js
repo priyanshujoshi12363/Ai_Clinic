@@ -98,7 +98,7 @@ export const identifyByFace = async (req, res) => {
     if (!session) return fail(res, 'Session not found', 404);
     if (!faceImage) return fail(res, 'Face image is required');
 
-    const result = await findPatientByFace(faceImage, threshold || 0.75);
+    const result = await findPatientByFace(faceImage, threshold || undefined);
 
     if (!result.success) {
       return res.status(200).json({

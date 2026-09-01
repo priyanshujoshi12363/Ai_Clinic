@@ -6,6 +6,7 @@ import {
   listenForSpeech,
   playChunks,
   playUrl,
+  playKokoro,
   stopSpeech,
   openCamera,
   closeCamera,
@@ -100,7 +101,8 @@ const ConsultationPage: React.FC<Props> = ({ navigateTo, language, setLanguage }
       if (cancelledRef.current) return;
       await playChunks(audio.audios, audio.format);
     } catch {
-      /* keep flowing even if TTS fails */
+      // Online voice unreachable → speak offline with Kokoro.
+      if (!cancelledRef.current) await playKokoro(shown, langRef.current);
     }
     setOrbMode('idle');
   };
@@ -116,7 +118,9 @@ const ConsultationPage: React.FC<Props> = ({ navigateTo, language, setLanguage }
       try {
         const a = await api.speak(fallbackText, langRef.current);
         await playChunks(a.audios, a.format);
-      } catch { /* ignore */ }
+      } catch {
+        if (!cancelledRef.current) await playKokoro(fallbackText, langRef.current);
+      }
     }
     setOrbMode('idle');
   };

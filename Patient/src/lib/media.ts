@@ -342,6 +342,74 @@ export const playChunks = async (
   if (token === playToken) activeAudio = null;
 };
 
+// ---------------------------------------------------------------------------
+// Offline neural TTS (Kokoro, runs fully in-browser via ONNX/WASM).
+// Used as the automatic fallback when the online Sarvam voice is unreachable,
+// so the kiosk keeps talking with no internet. Model is fetched & cached on
+// first use, then works offline.
+// ---------------------------------------------------------------------------
+const KOKORO_VOICES: Record<string, string> = { hi: 'hf_alpha', en: 'af_heart' };
+let kokoroPromise: Promise<any> | null = null;
+let ttsCtx: AudioContext | null = null;
+
+const getKokoro = () => {
+  if (!kokoroPromise) {
+    kokoroPromise = import('kokoro-js')
+      .then(({ KokoroTTS }) =>
+        KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {
+          dtype: 'q8',
+          device: 'wasm'
+        })
+      )
+      .catch((err) => { kokoroPromise = null; throw err; });
+  }
+  return kokoroPromise;
+};
+
+/** Warm the offline TTS model in the background (optional, speeds first use). */
+export const preloadOfflineTTS = () => { getKokoro().catch(() => undefined); };
+
+/**
+ * Speak text with the offline Kokoro voice. Returns true if it actually played.
+ * Honours the same stop token as playChunks/playUrl.
+ */
+export const playKokoro = async (text: string, language: string): Promise<boolean> => {
+  const clean = (text || '').trim();
+  if (!clean) return false;
+  const lang = (language || 'hi').split('-')[0];
+  const voice = KOKORO_VOICES[lang] || 'hf_alpha';
+
+  stopSpeech();
+  const token = ++playToken;
+
+  try {
+    const tts = await getKokoro();
+    if (token !== playToken) return false;
+    const out = await tts.generate(clean, { voice });
+    if (token !== playToken) return false;
+
+    if (!ttsCtx) ttsCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    if (ttsCtx.state === 'suspended') await ttsCtx.resume();
+
+    // Copy into a fresh ArrayBuffer-backed Float32Array for copyToChannel.
+    const src32 = out.audio as ArrayLike<number>;
+    const data = new Float32Array(src32.length);
+    data.set(src32);
+    const buffer = ttsCtx.createBuffer(1, data.length, out.sampling_rate);
+    buffer.copyToChannel(data, 0);
+
+    return await new Promise<boolean>((resolve) => {
+      const src = ttsCtx!.createBufferSource();
+      src.buffer = buffer;
+      src.connect(ttsCtx!.destination);
+      src.onended = () => resolve(true);
+      src.start();
+    });
+  } catch {
+    return false;
+  }
+};
+
 /** Plays a pre-recorded prompt from a URL, honouring the same stop control. */
 export const playUrl = async (url: string): Promise<boolean> => {
   stopSpeech();

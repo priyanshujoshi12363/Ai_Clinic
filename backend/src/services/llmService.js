@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { offlineChat } from './offlineAI.js';
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'https://ollama.com';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gemma4:31b';
@@ -63,23 +64,34 @@ export const parseJsonLoose = (text) => {
 export const chat = async (messages, options = {}) => {
   const { json = false, temperature = 0.3, model = OLLAMA_MODEL } = options;
 
-  const response = await client.post(
-    '/api/chat',
-    {
-      model,
-      messages,
-      stream: false,
-      ...(json ? { format: 'json' } : {}),
-      options: { temperature }
-    },
-    { headers: authHeader() }
-  );
+  try {
+    const response = await client.post(
+      '/api/chat',
+      {
+        model,
+        messages,
+        stream: false,
+        ...(json ? { format: 'json' } : {}),
+        options: { temperature }
+      },
+      { headers: authHeader() }
+    );
 
-  if (response.data?.error) {
-    throw new Error(`Ollama error: ${response.data.error}`);
+    if (response.data?.error) {
+      throw new Error(`Ollama error: ${response.data.error}`);
+    }
+
+    return response.data?.message?.content ?? '';
+  } catch (error) {
+    // Auto offline fallback: run local Gemma when the cloud LLM is unreachable.
+    try {
+      const content = await offlineChat(messages, { json, temperature });
+      console.warn(`[hybrid] LLM online failed (${error.message}); used offline Gemma.`);
+      return content;
+    } catch (offlineError) {
+      throw new Error(`Cloud LLM failed (${error.message}); offline Gemma also failed: ${offlineError.message}`);
+    }
   }
-
-  return response.data?.message?.content ?? '';
 };
 
 export const chatJSON = async (messages, options = {}) => {

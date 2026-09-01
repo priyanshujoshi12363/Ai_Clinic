@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Shell, Card, VoiceOrb, Banner, BigButton } from '../components/ui';
 import { getCopy, languageLabel } from '../i18n/strings';
 import { api, type EmergencyIntake } from '../lib/api';
-import { listenForSpeech, playChunks, playUrl, stopSpeech } from '../lib/media';
+import { listenForSpeech, playChunks, playUrl, playKokoro, stopSpeech } from '../lib/media';
 
 interface Props {
   navigateTo: (page: string) => void;
@@ -64,7 +64,10 @@ const EmergencyPage: React.FC<Props> = ({ navigateTo, language, setLanguage }) =
     try {
       const a = await api.speak(shown, langRef.current);
       await playChunks(a.audios, a.format);
-    } catch { /* keep flowing */ }
+    } catch {
+      // Online voice down → offline Kokoro so emergency intake still talks.
+      if (!cancelledRef.current) await playKokoro(shown, langRef.current);
+    }
     setOrbMode('idle');
   };
 

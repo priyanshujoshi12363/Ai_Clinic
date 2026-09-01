@@ -1,6 +1,7 @@
 import { speechToText, textToSpeech, translate, normalizeLanguage, SARVAM_LANGUAGES } from '../services/sarvamService.js';
 import { healthCheck as llmHealth, activeModel } from '../services/llmService.js';
 import { healthCheck as faceHealth } from '../services/faceService.js';
+import { offlineHealth } from '../services/offlineAI.js';
 
 export const transcribe = async (req, res) => {
   try {
@@ -98,9 +99,10 @@ export const languages = async (req, res) => {
 };
 
 export const pipelineHealth = async (req, res) => {
-  const [llm, face] = await Promise.all([llmHealth(), faceHealth()]);
+  const [llm, face, offline] = await Promise.all([llmHealth(), faceHealth(), offlineHealth()]);
 
   const sarvamConfigured = Boolean(process.env.SARVAM_API_KEY);
+  const onlineReady = Boolean(llm.success && sarvamConfigured);
 
   return res.json({
     success: true,
@@ -108,7 +110,16 @@ export const pipelineHealth = async (req, res) => {
       llm: { ...llm, model: activeModel() },
       speech: { configured: sarvamConfigured, provider: 'sarvam' },
       face: { reachable: face.success !== false, ...face },
-      readyForVoiceIntake: Boolean(llm.success && sarvamConfigured)
+      // Offline fallback (Whisper STT + Gemma LLM). TTS falls back to Kokoro in the kiosk.
+      offline: {
+        reachable: offline.success === true,
+        device: offline.device || null,
+        gpu: offline.gpu || null,
+        whisper: offline.whisper_model || null,
+        gemma: offline.gemma_repo || null
+      },
+      mode: onlineReady ? 'online' : (offline.success ? 'offline' : 'degraded'),
+      readyForVoiceIntake: onlineReady || offline.success === true
     }
   });
 };

@@ -106,7 +106,7 @@ const faceVerificationSchema = new mongoose.Schema({
 const emergencyFlagsSchema = new mongoose.Schema({
   triggered: { type: Boolean, default: false },
   symptoms: [String],
-  urgency: { type: String, enum: ['IMMEDIATE', 'URGENT', 'ROUTINE'], default: 'ROUTINE' },
+  urgency: { type: String, enum: ['EMERGENCY', 'IMMEDIATE', 'URGENT', 'ROUTINE'], default: 'ROUTINE' },
   triageAlert: { type: Boolean, default: false },
   alertedAt: { type: Date },
   acknowledgedBy: { type: String },
