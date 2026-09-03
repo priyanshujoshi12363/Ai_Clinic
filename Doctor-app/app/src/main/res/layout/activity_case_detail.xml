@@ -106,6 +106,14 @@
                 android:layout_marginTop="16dp"
                 android:text="@string/listen_summary" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPrescribe"
+                style="@style/Widget.DoctorApp.Button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="℞  Prescribe medicine" />
+
             <TextView
                 style="@style/Text.SectionLabel"
                 android:id="@+id/lblKeyPoints"

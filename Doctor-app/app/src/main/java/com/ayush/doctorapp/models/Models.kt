@@ -273,3 +273,38 @@ data class IntakeSession(
     val identificationMethod: String?,
     val completedAt: String?
 )
+
+// ---- Prescription / medicine master (Doctor prescribes here) ----
+data class Medicine(
+    @SerializedName("_id") val id: String?,
+    val name: String,
+    val generic: String?,
+    val form: String?,
+    val strength: String?,
+    val category: String?,
+    val defaultFrequency: String?,
+    val defaultTiming: String?,
+    val defaultDuration: String?,
+    val system: String?
+)
+
+data class PrescriptionMedicineInput(
+    val name: String,
+    val dosage: String?,
+    val frequency: String?,
+    val timing: String?,
+    val duration: String?,
+    val quantity: Int? = null
+)
+
+data class CreatePrescriptionRequest(
+    val doctorName: String,
+    val specialty: String?,
+    val diagnosis: String?,
+    val instructions: String?,
+    val medicines: List<PrescriptionMedicineInput>
+)
+
+data class PrescriptionResult(
+    val totalPrescriptions: Int?
+)

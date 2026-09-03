@@ -24,6 +24,8 @@ class CaseDetailActivity : AppCompatActivity() {
     private val viewModel: OpdQueueViewModel by viewModels()
     private val player = BriefingPlayer()
     private var sessionId: String = ""
+    private var patientAbha: String? = null
+    private var patientName: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +54,20 @@ class CaseDetailActivity : AppCompatActivity() {
             } else {
                 binding.btnListen.isEnabled = false
                 viewModel.loadBriefing(sessionId)
+            }
+        }
+
+        binding.btnPrescribe.isEnabled = false
+        binding.btnPrescribe.setOnClickListener {
+            val abha = patientAbha
+            if (abha.isNullOrBlank()) {
+                Snackbar.make(binding.root, "Patient is not identified — no ABHA to prescribe against.", Snackbar.LENGTH_LONG).show()
+            } else {
+                startActivity(
+                    android.content.Intent(this, PrescribeActivity::class.java)
+                        .putExtra(Constants.EXTRA_ABHA_ID, abha)
+                        .putExtra(Constants.EXTRA_PATIENT_NAME, patientName)
+                )
             }
         }
     }
@@ -107,6 +123,9 @@ class CaseDetailActivity : AppCompatActivity() {
     }
 
     private fun render(session: IntakeSession) {
+        patientAbha = session.abhaId
+        patientName = session.patientName
+        binding.btnPrescribe.isEnabled = !session.abhaId.isNullOrBlank()
         binding.tvName.text = session.patientName?.takeIf { it.isNotBlank() } ?: "Unidentified patient"
         binding.tvMeta.text = listOfNotNull(
             session.abhaId,

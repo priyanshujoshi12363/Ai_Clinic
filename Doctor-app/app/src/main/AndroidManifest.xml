@@ -40,6 +40,11 @@
             android:exported="false" />
 
         <activity
+            android:name=".activities.PrescribeActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".activities.EmergencyDetailActivity"
             android:exported="false" />
 

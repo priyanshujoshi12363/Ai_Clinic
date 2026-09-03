@@ -53,4 +53,14 @@ interface ApiService {
         @Path("tokenNumber") tokenNumber: String,
         @Body request: BriefingRequest
     ): Response<ApiResponse<BriefingResponse>>
+
+    // ---- Prescriptions (doctor prescribes) ----
+    @GET("clinical/medicines")
+    suspend fun searchMedicines(@Query("q") q: String): Response<ApiResponse<List<Medicine>>>
+
+    @POST("clinical/patient/{abhaId}/prescription")
+    suspend fun createPrescription(
+        @Path("abhaId") abhaId: String,
+        @Body request: CreatePrescriptionRequest
+    ): Response<ApiResponse<PrescriptionResult>>
 }
