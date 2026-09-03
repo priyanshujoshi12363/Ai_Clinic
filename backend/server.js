@@ -10,6 +10,7 @@ import emergency from "./src/Routes/emergencyRoutes.js"
 import consult from "./src/Routes/ConsulatationRoutes.js"
 import intake from "./src/Routes/intakeRoutes.js"
 import voice from "./src/Routes/voiceRoutes.js"
+import clinical from "./src/Routes/clinicalRoutes.js"
 dotenv.config();
 
 const app = express();
@@ -27,6 +28,7 @@ app.use("/emergency" , emergency)
 app.use("/consult" , consult)
 app.use("/intake" , intake)
 app.use("/voice" , voice)
+app.use("/clinical" , clinical)
 app.get("/", (req, res) => {
   res.json({
     success: true,
