@@ -115,6 +115,22 @@
                 android:text="℞  Prescribe medicine" />
 
             <TextView
+                android:id="@+id/lblPrescriptions"
+                style="@style/Text.SectionLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Prescriptions"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/llPrescriptions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="vertical" />
+
+            <TextView
                 style="@style/Text.SectionLabel"
                 android:id="@+id/lblKeyPoints"
                 android:layout_width="match_parent"

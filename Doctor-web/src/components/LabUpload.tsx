@@ -13,6 +13,7 @@ const LabUpload: React.FC<{ abhaId: string; onDone: () => void }> = ({ abhaId, o
   const [stage, setStage] = useState('')
   const [tests, setTests] = useState<LabTest[] | null>(null)
   const [err, setErr] = useState('')
+  const [mode, setMode] = useState<'ocr' | 'normal'>('ocr')
 
   const onFile = (f?: File) => {
     if (!f) return
@@ -24,11 +25,15 @@ const LabUpload: React.FC<{ abhaId: string; onDone: () => void }> = ({ abhaId, o
 
   const upload = async () => {
     if (!dataUrl) return
-    setBusy(true); setErr(''); setStage('Uploading & running OCR…')
+    setBusy(true); setErr(''); setStage(mode === 'ocr' ? 'Uploading & running OCR…' : 'Uploading…')
     try {
-      const res = await api.uploadLab(abhaId, { file: dataUrl, fileType, labName, notes })
-      setTests(res.tests || [])
-      setStage(res.ocr?.status === 'FAILED' ? 'Saved (OCR unavailable)' : `Saved · ${res.tests?.length || 0} results extracted`)
+      const res = await api.uploadLab(abhaId, { file: dataUrl, fileType, labName, notes, runOcr: mode === 'ocr' })
+      setTests(mode === 'ocr' ? (res.tests || []) : [])
+      setStage(
+        mode === 'normal' ? 'Saved · file attached to record'
+          : res.ocr?.status === 'FAILED' ? 'Saved (OCR unavailable)'
+          : `Saved · ${res.tests?.length || 0} results extracted`
+      )
       onDone()
     } catch (e: any) { setErr(e.message) }
     finally { setBusy(false) }
@@ -36,6 +41,21 @@ const LabUpload: React.FC<{ abhaId: string; onDone: () => void }> = ({ abhaId, o
 
   return (
     <div className="space-y-4">
+      {/* mode toggle: OCR (structured) vs normal (file only) */}
+      <div className="inline-flex rounded-xl bg-slate-100 p-1 ring-1 ring-slate-200">
+        {([['ocr', '🔬 Extract with OCR'], ['normal', '📎 Just upload']] as [typeof mode, string][]).map(([m, label]) => (
+          <button key={m} onClick={() => { setMode(m); setTests(null); setStage('') }}
+            className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold transition ${mode === m ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-slate-400 -mt-1">
+        {mode === 'ocr'
+          ? 'OCR reads the report image into a structured results table (values, units, reference ranges, abnormal flags).'
+          : 'Attaches the report file to the patient record as-is — no extraction.'}
+      </p>
+
       <div className="grid sm:grid-cols-2 gap-4">
         <label className="relative flex flex-col items-center justify-center h-44 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-teal-50/50 hover:border-teal-300 cursor-pointer transition overflow-hidden">
           {preview
@@ -59,7 +79,7 @@ const LabUpload: React.FC<{ abhaId: string; onDone: () => void }> = ({ abhaId, o
           </div>
           <button onClick={upload} disabled={!dataUrl || busy}
             className="w-full py-2.5 rounded-xl bg-teal-600 text-white font-semibold text-sm hover:bg-teal-700 disabled:opacity-40 transition">
-            {busy ? stage : 'Upload & extract with OCR'}
+            {busy ? stage : (mode === 'ocr' ? 'Upload & extract with OCR' : 'Upload report')}
           </button>
           {stage && !busy && <div className="text-xs text-emerald-600 font-medium text-center">{stage}</div>}
           {err && <div className="text-xs text-red-600 text-center">{err}</div>}

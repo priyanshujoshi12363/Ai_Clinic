@@ -7,4 +7,6 @@ object Constants {
     const val EXTRA_EMERGENCY_TOKEN = "emergencyToken"
     const val EXTRA_ABHA_ID = "abhaId"
     const val EXTRA_PATIENT_NAME = "patientName"
+    const val EXTRA_PRESCRIPTION_ID = "prescriptionId"
+    const val EXTRA_PRESCRIPTION_JSON = "prescriptionJson"
 }

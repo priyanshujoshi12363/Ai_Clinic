@@ -168,6 +168,42 @@ export const createPrescription = async (req, res) => {
 };
 
 // ---------------------------------------------------------------------------
+// Edit an existing prescription (doctor can review & change what was prescribed)
+// ---------------------------------------------------------------------------
+export const updatePrescription = async (req, res) => {
+  try {
+    const { medicines, diagnosis, instructions, doctorName } = req.body;
+    const patient = await Patient.findOne({ abhaId: req.params.abhaId });
+    if (!patient) return fail(res, 'Patient not found', 404);
+
+    const rx = patient.prescriptions.find((p) => p.prescriptionId === req.params.prescriptionId);
+    if (!rx) return fail(res, 'Prescription not found', 404);
+
+    if (Array.isArray(medicines)) {
+      if (medicines.length === 0) return fail(res, 'A prescription needs at least one medicine');
+      rx.medicines = medicines.map((m) => ({
+        name: m.name, dosage: m.dosage || '', frequency: m.frequency || '',
+        timing: m.timing || '', duration: m.duration || '',
+        quantity: Number(m.quantity) || undefined
+      }));
+    }
+    if (diagnosis !== undefined) rx.diagnosis = diagnosis;
+    if (instructions !== undefined) rx.instructions = instructions;
+    if (doctorName) rx.doctorName = doctorName;
+
+    patient.medicalTimeline.push({
+      type: 'PRESCRIPTION', date: new Date(),
+      description: `Prescription edited — ${rx.medicines.map((m) => m.name).slice(0, 3).join(', ')}`,
+      source: rx.doctorName, visitId: rx.visitId,
+      metadata: { referenceId: rx.prescriptionId, edited: true }
+    });
+
+    await patient.save();
+    return ok(res, { prescription: rx });
+  } catch (e) { return fail(res, e.message, 500); }
+};
+
+// ---------------------------------------------------------------------------
 // Upload a lab report  →  Cloudinary + patient.documents / labReports / timeline
 // ---------------------------------------------------------------------------
 export const uploadLabReport = async (req, res) => {

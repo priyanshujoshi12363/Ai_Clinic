@@ -63,4 +63,14 @@ interface ApiService {
         @Path("abhaId") abhaId: String,
         @Body request: CreatePrescriptionRequest
     ): Response<ApiResponse<PrescriptionResult>>
+
+    @GET("clinical/patient/{abhaId}")
+    suspend fun getClinicalPatient(@Path("abhaId") abhaId: String): Response<ApiResponse<ClinicalPatient>>
+
+    @PUT("clinical/patient/{abhaId}/prescription/{prescriptionId}")
+    suspend fun updatePrescription(
+        @Path("abhaId") abhaId: String,
+        @Path("prescriptionId") prescriptionId: String,
+        @Body request: CreatePrescriptionRequest
+    ): Response<ApiResponse<Unit>>
 }

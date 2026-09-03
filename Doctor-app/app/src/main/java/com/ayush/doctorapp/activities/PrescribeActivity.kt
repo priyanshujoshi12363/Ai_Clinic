@@ -12,12 +12,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.ayush.doctorapp.adapters.MedRow
 import com.ayush.doctorapp.adapters.PrescribeMedicineAdapter
 import com.ayush.doctorapp.databinding.ActivityPrescribeBinding
+import com.ayush.doctorapp.models.ClinicalPrescription
 import com.ayush.doctorapp.models.CreatePrescriptionRequest
 import com.ayush.doctorapp.models.Medicine
 import com.ayush.doctorapp.models.PrescriptionMedicineInput
 import com.ayush.doctorapp.network.ApiClient
 import com.ayush.doctorapp.utils.Constants
 import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
 import kotlinx.coroutines.launch
 
 class PrescribeActivity : AppCompatActivity() {
@@ -26,6 +28,7 @@ class PrescribeActivity : AppCompatActivity() {
     private lateinit var adapter: PrescribeMedicineAdapter
 
     private var abhaId = ""
+    private var editId: String? = null
     private var lastResults: List<Medicine> = emptyList()
     private val handler = Handler(Looper.getMainLooper())
     private var searchJob: Runnable? = null
@@ -48,11 +51,33 @@ class PrescribeActivity : AppCompatActivity() {
         adapter = PrescribeMedicineAdapter { refreshEmpty() }
         binding.rvMedicines.layoutManager = LinearLayoutManager(this)
         binding.rvMedicines.adapter = adapter
-        refreshEmpty()
 
+        prefillIfEditing()
+        refreshEmpty()
         setupSearch()
 
         binding.btnSave.setOnClickListener { save() }
+    }
+
+    /** Edit mode — opened with an existing prescription to review & change. */
+    private fun prefillIfEditing() {
+        editId = intent.getStringExtra(Constants.EXTRA_PRESCRIPTION_ID)
+        val json = intent.getStringExtra(Constants.EXTRA_PRESCRIPTION_JSON) ?: return
+        val rx = try { Gson().fromJson(json, ClinicalPrescription::class.java) } catch (_: Exception) { null } ?: return
+        supportActionBar?.title = "Edit prescription"
+        binding.btnSave.text = "Update prescription"
+        binding.etDiagnosis.setText(rx.diagnosis.orEmpty())
+        binding.etAdvice.setText(rx.instructions.orEmpty())
+        rx.medicines.orEmpty().forEach { m ->
+            adapter.add(MedRow(
+                display = "${m.name}  ${m.dosage ?: ""}".trim(),
+                name = m.name ?: "",
+                dosage = m.dosage ?: "",
+                frequency = m.frequency ?: "",
+                timing = m.timing ?: "After food",
+                duration = m.duration ?: ""
+            ))
+        }
     }
 
     private fun refreshEmpty() {
@@ -136,14 +161,27 @@ class PrescribeActivity : AppCompatActivity() {
         binding.btnSave.isEnabled = false
         lifecycleScope.launch {
             try {
-                val res = ApiClient.apiService.createPrescription(abhaId, request)
+                val id = editId
+                val success: Boolean
+                val message: String?
+                if (id.isNullOrBlank()) {
+                    val res = ApiClient.apiService.createPrescription(abhaId, request)
+                    success = res.isSuccessful && res.body()?.success == true
+                    message = res.body()?.message
+                } else {
+                    val res = ApiClient.apiService.updatePrescription(abhaId, id, request)
+                    success = res.isSuccessful && res.body()?.success == true
+                    message = res.body()?.message
+                }
                 binding.progressBar.visibility = View.GONE
                 binding.btnSave.isEnabled = true
-                if (res.isSuccessful && res.body()?.success == true) {
-                    Snackbar.make(binding.root, "✓ Prescription saved to the patient's record", Snackbar.LENGTH_LONG).show()
+                if (success) {
+                    val msg = if (editId.isNullOrBlank()) "✓ Prescription saved to the patient's record"
+                              else "✓ Prescription updated"
+                    Snackbar.make(binding.root, msg, Snackbar.LENGTH_LONG).show()
                     binding.root.postDelayed({ finish() }, 900)
                 } else {
-                    Snackbar.make(binding.root, res.body()?.message ?: "Could not save prescription", Snackbar.LENGTH_LONG).show()
+                    Snackbar.make(binding.root, message ?: "Could not save prescription", Snackbar.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 binding.progressBar.visibility = View.GONE

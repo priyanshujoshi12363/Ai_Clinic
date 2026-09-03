@@ -308,3 +308,27 @@ data class CreatePrescriptionRequest(
 data class PrescriptionResult(
     val totalPrescriptions: Int?
 )
+
+// ---- Clinical patient detail (for showing/editing saved prescriptions) ----
+data class ClinicalMedicine(
+    val name: String?,
+    val dosage: String?,
+    val frequency: String?,
+    val timing: String?,
+    val duration: String?
+)
+
+data class ClinicalPrescription(
+    val prescriptionId: String?,
+    val date: String?,
+    val doctorName: String?,
+    val diagnosis: String?,
+    val instructions: String?,
+    val medicines: List<ClinicalMedicine>?
+)
+
+data class ClinicalPatient(
+    val abhaId: String?,
+    val name: String?,
+    val prescriptions: List<ClinicalPrescription>?
+)

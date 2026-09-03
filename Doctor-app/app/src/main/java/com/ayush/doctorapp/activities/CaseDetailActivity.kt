@@ -1,22 +1,30 @@
 package com.ayush.doctorapp.activities
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.ayush.doctorapp.R
 import com.ayush.doctorapp.adapters.TriageStyle
 import com.ayush.doctorapp.databinding.ActivityCaseDetailBinding
+import com.ayush.doctorapp.databinding.ItemPrescriptionCardBinding
 import com.ayush.doctorapp.models.AyushHistory
 import com.ayush.doctorapp.models.ClinicalHistory
+import com.ayush.doctorapp.models.ClinicalPrescription
 import com.ayush.doctorapp.models.IntakeSession
 import com.ayush.doctorapp.models.SessionDocument
+import com.ayush.doctorapp.network.ApiClient
 import com.ayush.doctorapp.network.ApiResult
 import com.ayush.doctorapp.utils.BriefingPlayer
 import com.ayush.doctorapp.utils.Constants
 import com.ayush.doctorapp.viewmodels.OpdQueueViewModel
 import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
+import kotlinx.coroutines.launch
 
 class CaseDetailActivity : AppCompatActivity() {
 
@@ -122,10 +130,51 @@ class CaseDetailActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (!patientAbha.isNullOrBlank()) loadPrescriptions()
+    }
+
+    private fun loadPrescriptions() {
+        val abha = patientAbha ?: return
+        lifecycleScope.launch {
+            try {
+                val res = ApiClient.apiService.getClinicalPatient(abha)
+                renderPrescriptions(res.body()?.data?.prescriptions.orEmpty())
+            } catch (_: Exception) { /* keep screen usable if offline */ }
+        }
+    }
+
+    private fun renderPrescriptions(list: List<ClinicalPrescription>) {
+        binding.llPrescriptions.removeAllViews()
+        binding.lblPrescriptions.visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
+        val inflater = LayoutInflater.from(this)
+        list.forEach { rx ->
+            val card = ItemPrescriptionCardBinding.inflate(inflater, binding.llPrescriptions, false)
+            card.tvRxDiagnosis.text = rx.diagnosis?.takeIf { it.isNotBlank() } ?: "Prescription"
+            card.tvRxMeta.text = listOfNotNull(rx.date?.take(10), rx.doctorName).joinToString(" · ")
+            card.tvRxMeds.text = rx.medicines.orEmpty().joinToString("\n") { m ->
+                "• ${m.name} ${m.dosage ?: ""} — " +
+                    listOfNotNull(m.frequency, m.timing, m.duration).joinToString(" · ")
+            }
+            card.btnEditRx.setOnClickListener {
+                startActivity(
+                    Intent(this, PrescribeActivity::class.java)
+                        .putExtra(Constants.EXTRA_ABHA_ID, patientAbha)
+                        .putExtra(Constants.EXTRA_PATIENT_NAME, patientName)
+                        .putExtra(Constants.EXTRA_PRESCRIPTION_ID, rx.prescriptionId)
+                        .putExtra(Constants.EXTRA_PRESCRIPTION_JSON, Gson().toJson(rx))
+                )
+            }
+            binding.llPrescriptions.addView(card.root)
+        }
+    }
+
     private fun render(session: IntakeSession) {
         patientAbha = session.abhaId
         patientName = session.patientName
         binding.btnPrescribe.isEnabled = !session.abhaId.isNullOrBlank()
+        loadPrescriptions()
         binding.tvName.text = session.patientName?.takeIf { it.isNotBlank() } ?: "Unidentified patient"
         binding.tvMeta.text = listOfNotNull(
             session.abhaId,
